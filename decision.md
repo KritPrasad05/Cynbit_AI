@@ -61,3 +61,35 @@ build-machine time (UTC+5:30 context, dates YYYY-MM-DD).
 - Reason: Reproducibility and honesty of the scoring process matter more to the reviewer than the specific winner.
 - Trade-off accepted: None.
 - Revisit if: n/a.
+
+### D-008 : Data sourcing — synthetic only, grounded in public patterns   [Phase 4]  [2026-10-19]
+- Context: The POC needs labeled inquiries; Cynbit's real inquiry logs are private and unavailable.
+- Options considered: A) purely hand-written examples, B) template+slot generator with seeded RNG (deterministic), C) live-LLM generation of examples.
+- Decision: B, with hand-written template bodies modeled on real public inquiry patterns (RFP-style requests, WhatsApp-style messages, LinkedIn intros) and hard-case pools (vague, Hinglish, out-of-scope, injection, very short, mixed-intent). Catalog grounding file is hand-curated from data/raw/, explicitly not synthetic.
+- Reason: Determinism and reproducibility (seed 42) matter for eval credibility; templates give controlled label ground truth; C would contaminate eval with model-authored text (self-grading risk).
+- Trade-off accepted: Linguistic diversity is narrower than real-world inquiries; disclosed in report.md limitations.
+- Revisit if: real anonymized inquiry samples become available — regenerate labels collaboratively with BD.
+
+### D-009 : Dataset size and composition   [Phase 4]  [2026-10-19]
+- Context: Challenge requires ≥150 labeled examples with realistic diversity including hard cases.
+- Options considered: 150 exactly vs 170 with wider hard-case coverage.
+- Decision: 170 total (120 train / 50 eval) across all four service lines; hard cases ≈ 30% of eval (vague, Hinglish, out-of-scope, injection, very-short, mixed-intent multi-service).
+- Reason: 50-example eval gives roughly ±14pp 95% CI on accuracy — acceptable for a POC; more hard cases in eval = more informative failure analysis.
+- Trade-off accepted: Small eval means metrics are estimates, not guarantees; CI stated in eval results.
+- Revisit if: extending to production — grow eval to ≥300.
+
+### D-010 : Label schema   [Phase 4]  [2026-10-19]
+- Context: Classification target design.
+- Options considered: A) single primary service, B) multi-label services + exclusive out_of_scope + complexity S/M/L + intent, C) fine-grained 20-class taxonomy mirroring every sub-service.
+- Decision: B. Multi-label matches reality ("site + SEO"), out_of_scope exclusive, complexity as 3 bands (a defensible target without historical cost data), intent coarse.
+- Reason: Matches Cynbit's actual case-study taxonomy (Fact: software dev / cloud / digital marketing categories on their site) while staying learnable at N=170.
+- Trade-off accepted: Complexity banding is coarser than hours-based estimation; extraction gold (budget/timeline/industry) normalized to categories, not raw strings, to keep exact-match meaningful.
+- Revisit if: real pricing history enables continuous effort regression.
+
+### D-011 : Eval split discipline   [Phase 4]  [2026-10-19]
+- Context: Holdout must never leak into prompts/few-shot.
+- Options considered: A) random 50-example holdout, B) stratified holdout guaranteeing hard cases, C) k-fold.
+- Decision: B — data/synthetic/leads_eval.jsonl (50 examples, ~30% hard cases) generated once (seed 42) and frozen; few-shot examples in prompts are drawn only from leads_train.jsonl; the offline classifier trains only on the train split.
+- Reason: Guarantees the eval measures generalization incl. adversarial inputs; frozen file prevents accidental re-splitting.
+- Trade-off accepted: Single split, no variance estimate across folds; mitigated by reporting binomial CIs.
+- Revisit if: dataset grows past ~500 — move to grouped k-fold by template family.

@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "note": "Hand-curated from Cynbit public marketing pages (data/raw/) on 2026-10-19. Short factual descriptors rewritten for retrieval grounding; source URLs preserved. Not synthetic.",
+    "sources": [
+      "https://www.cynbit.in/services",
+      "https://www.cynbit.in/products",
+      "https://www.cynbit.in/"
+    ]
+  },
+  "services": [
+    {
+      "id": "ai_automation",
+      "name": "AI Automation Suite",
+      "suite": "AI automation",
+      "description": "Autonomous AI agents and cognitive automation that transform business operations through intelligent execution: agents that manage leads and coordination, LLM automation of manual data entry and document handling, AI voice agents for human-machine communication, and integration of AI into an existing SaaS stack.",
+      "capabilities": [
+        "Autonomous agents (lead management, coordination)",
+        "LLM automation (data entry, document handling)",
+        "AI voice agents",
+        "AI stack integration into existing SaaS"
+      ],
+      "match_keywords": [
+        "chatbot", "ai agent", "llm", "automate", "automation", "voice agent",
+        "document processing", "extract", "classify", "triage", "recommender",
+        "copilot", "assistant", "intelligent", "scoring", "rag"
+      ],
+      "related_product": null,
+      "source_url": "https://www.cynbit.in/services"
+    },
+    {
+      "id": "software_dev",
+      "name": "Custom IT Services — Software Development",
+      "suite": "Custom IT services",
+      "description": "High-performance, full-stack web and mobile software engineering meeting enterprise standards: scalable platforms, secure backend systems, and modern product builds from design to deployment.",
+      "capabilities": [
+        "Full-stack web & mobile development",
+        "Backend systems (secure, high-uptime)",
+        "Product engineering end to end"
+      ],
+      "match_keywords": [
+        "website", "web app", "mobile app", "ios", "android", "dashboard",
+        "portal", "saas", "platform", "booking", "storefront", "ecommerce",
+        "marketplace", "landing page", "internal tool", "erp", "rebuild",
+        "ar", "real-time"
+      ],
+      "related_product": null,
+      "source_url": "https://www.cynbit.in/services"
+    },
+    {
+      "id": "cloud",
+      "name": "Custom IT Services — Cloud & Infrastructure",
+      "suite": "Custom IT services",
+      "description": "Resilient cloud infrastructure for modern digital growth: deployment across AWS and Azure with zero-trust security, legacy monolith migration into distributed systems, and production-grade reliability engineering.",
+      "capabilities": [
+        "AWS / Azure cloud infrastructure",
+        "Zero-trust security posture",
+        "Legacy migration to distributed systems"
+      ],
+      "match_keywords": [
+        "aws", "azure", "cloud", "migrate", "migration", "kubernetes", "k8s",
+        "devops", "ci/cd", "infrastructure", "terraform", "scaling",
+        "uptime", "monolith", "microservices", "backup", "dr", "cost optimization"
+      ],
+      "related_product": null,
+      "source_url": "https://www.cynbit.in/services"
+    },
+    {
+      "id": "seo_marketing",
+      "name": "Digital Marketing & Technical SEO",
+      "suite": "Digital marketing",
+      "description": "Performance-led strategies merging technical SEO with high-impact creative: Google and Meta ad campaigns focused on ROI and lead generation, infrastructure-level technical SEO, CRM automation that nurtures leads, and funnel optimization with high-conversion landing pages.",
+      "capabilities": [
+        "Performance ads (Google & Meta)",
+        "Technical SEO",
+        "CRM automation",
+        "Funnel optimization / landing pages"
+      ],
+      "match_keywords": [
+        "seo", "google ads", "meta ads", "marketing", "traffic", "ranking",
+        "keywords", "content", "campaign", "leads", "funnel", "conversion",
+        "cro", "newsletter", "local seo", "link building"
+      ],
+      "related_product": null,
+      "source_url": "https://www.cynbit.in/services"
+    }
+  ],
+  "products": [
+    {
+      "id": "cynbit_studio",
+      "name": "Cynbit Studio",
+      "category": "Career intelligence (edtech)",
+      "description": "AI-powered career growth lab: adaptive coding paths, placement assessment, AI-evaluated missions, mock interviews, resume engine, and job matcher analysis.",
+      "source_url": "https://www.cynbit.in/products"
+    },
+    {
+      "id": "revio",
+      "name": "Revio",
+      "category": "AI Review Assistant / reputation engine",
+      "description": "AI-first reputation engine: cross-platform review sync (Google, social, industry sites), AI-generated professional responses, sentiment intelligence, crisis detection, and multi-location control.",
+      "source_url": "https://www.cynbit.in/products"
+    },
+    {
+      "id": "tenantease",
+      "name": "TenantEase",
+      "category": "Property & tenant management platform",
+      "description": "Smart property and tenant management: rent and payment tracking with automated reminders, unit/availability tracking, tenant profiles with ID verification, and occupancy/revenue dashboards.",
+      "source_url": "https://www.cynbit.in/products"
+    }
+  ],
+  "delivery_process": [
+    "Discovery & audit",
+    "Strategy & blueprinting",
+    "High-fidelity design",
+    "Technical implementation",
+    "Quality & integrity check",
+    "Deployment & evolution"
+  ],
+  "contact": {
+    "email": "opportunities@cynbit.in",
+    "note": "Start discovery via the website contact form or email."
+  }
+}
