@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest ruff
+
+      - name: Lint (ruff)
+        run: ruff check app evals scripts tests --select E9,F63,F7,F82,F401
+
+      - name: Unit tests (no key, no network)
+        env:
+          LLM_PROVIDER: offline
+        run: pytest tests/ -q --tb=short
+
+      - name: Offline eval smoke test (10 examples)
+        env:
+          LLM_PROVIDER: offline
+        run: python evals/run_eval.py --limit 10
+
+      - name: Regenerate data determinism check
+        run: |
+          python scripts/build_data.py
+          git diff --exit-code data/synthetic/ || {
+            echo "::error::data regeneration is not deterministic (seed drift)"; exit 1; }
+
+      - name: No secrets in repo
+        run: |
+          ! grep -rInE "(GLM_API_KEY|api[_-]?key)\s*[:=]\s*['\"][A-Za-z0-9_-]{16,}" \
+            --include="*.py" --include="*.md" --include="*.json" --include="*.yml" . \
+            || { echo "::error::possible secret committed"; exit 1; }
+          test ! -f .env || { echo "::error::.env must not be committed"; exit 1; }
