@@ -52,7 +52,13 @@ from .schemas import (
 # ---------------------------------------------------------------------------
 
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
-PHONE_RE = re.compile(r"(?:\+91[\s-]?)?[6-9]\d{9}|\+\d{1,3}[\s-]?\d{6,12}|\b\d{3}[\s-]\d{3}[\s-]\d{4}\b")
+PHONE_RE = re.compile(
+    r"\+91[\s-]?\d{5}[\s-]?\d{5}"          # +91 98765 43210
+    r"|\b[6-9]\d{9}\b"                      # 9876543210
+    r"|\b[6-9]\d{4}[\s-]\d{5}\b"           # 98765 43210 (Indian mobile)
+    r"|\+\d{1,3}[\s-]?\d{7,12}"             # international
+    r"|\b\d{3}[\s-]\d{3}[\s-]\d{4}\b"     # US-style
+)
 
 INJECTION_PATTERNS = [
     (r"ignore (?:all |any )?(?:previous|prior|above) (?:instructions|rules|prompts)", "ignore-previous-instructions"),

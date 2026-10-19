@@ -73,7 +73,9 @@ BUDGET_RE = re.compile(
     r"(?:rs\.?|inr|₹|\$)\s?([\d][\d,\.]*)\s?(lakh|lakhs|l\b|crore|k\b|thousand)?",
     re.I,
 )
-BUDGET_TIGHT_RE = re.compile(r"budget (?:is |a bit )?(?:tight|low|limited|small)|tight budget", re.I)
+BUDGET_TIGHT_RE = re.compile(
+    r"budget\b[^.\n]{0,30}?\b(tight|low|limited|small)\b|tight budget", re.I
+)
 TIMELINE_RE = re.compile(
     r"(?:within|in|by|before)\s+(?:the\s+)?(?:next\s+)?(\d+)\s*(week|month)s?|"
     r"(\d+)\s*(week|month)s?\b|next quarter|diwali|festive season|this year|"
@@ -109,9 +111,9 @@ INDUSTRY_DICT = {
 def extract_budget(text: str) -> str | None:
     m = BUDGET_RE.search(text)
     if m:
-        amt, unit = m.group(1), (m.group(2) or "").lower()
-        cur = "INR" if not text[m.start()].isdigit() and "rs" in text[max(0, m.start()-3):m.start()+3].lower() or "₹" in text[m.start():m.start()+2] or "inr" in text[max(0, m.start()-4):m.start()+4].lower() else "USD"
-        return f"{cur} {amt}{(' ' + unit) if unit else ''}"
+        unit = (m.group(2) or "").lower()
+        cur = "USD" if "$" in m.group(0) else "INR"
+        return f"{cur} {m.group(1)}{(' ' + unit) if unit else ''}"
     if BUDGET_TIGHT_RE.search(text):
         return "tight/limited budget (no figure stated)"
     return None
