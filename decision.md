@@ -133,3 +133,70 @@ build-machine time (UTC+5:30 context, dates YYYY-MM-DD).
 - Reason: Exercises the exact production code path end-to-end without duplicating logic; gateway 429 rate limits were handled with pacing and retries (observed: bursts of ~25–35 calls trigger ~10–15 min cooldowns).
 - Trade-off accepted: Live numbers come from glm-4-plus, a stronger model than free-tier glm-4-flash; results are labeled accordingly and the reviewer can re-run with any key against the true free tier.
 - Revisit if: A real key becomes available — re-run `evals/run_eval.py --provider glm` and `scripts/gen_cache.py`.
+
+### D-017 : Evaluation design — stress-weighted holdout, task-appropriate metrics   [Phase 6]  [2026-10-19]
+- Context: Mixed task (multi-label classification + extraction + generation advice) needs an eval that a reviewer can audit.
+- Options considered: A) accuracy only, B) full multi-metric suite with per-example audit files, C) LLM-as-judge for everything.
+- Decision: B (+ bounded C): exact-set accuracy with Wilson CI, macro-F1 per class, OOS recall/precision, complexity exact+adjacent, budget/timeline presence+value F1 with normalizers, injection pass-rate (flagged ∧ on-task ∧ no-compliance), schema validity, latency/tokens, live coverage. Judge limited to an optional 10-example question-usefulness sample (blocked by rate limits, documented).
+- Reason: Every claim in the reports traces to a file; adversarial inputs get their own metric; the eval README defines everything.
+- Trade-off accepted: 50 examples → wide CIs (±14pp); stated wherever quoted.
+- Revisit if: dataset ≥ 300 — add grouped k-fold by template family.
+
+### D-018 : Baselines — rules-only and the offline engine   [Phase 6]  [2026-10-19]
+- Options considered: A) majority class, B) keyword/TF-IDF-similarity rules, C) TF-IDF+LogReg (the offline engine), D) no-grounding LLM.
+- Decision: B (B0) and C (B1) as the two baselines; D as ablation. A rejected as uninformative (class balance too even).
+- Reason: B0 shows what free rules buy (0.36 exact-set), B1 shows the classical ceiling (0.56), the live pipeline shows what GLM adds (0.74) — the reviewer sees each layer's marginal value.
+- Trade-off accepted: B1 doubles as the offline engine (dual role) — disclosed to avoid double-counting novelty.
+- Revisit if: a transformer fine-tune becomes feasible.
+
+### D-019 : Ablations — grounding and few-shot; one blocked honestly   [Phase 6]  [2026-10-19]
+- Context: Challenge requires ≥1 ablation; build-gateway rate limits constrained live budget.
+- Options considered: A) skip ablations, B) no-grounding only, C) no-grounding + no-fewshot on subsamples.
+- Decision: C attempted; no-grounding completed (n=10, matched live-only comparison — classification identical 8/8, evidence coverage 0%→100%); no-fewshot attempted 5× across spread-out windows, all blocked by gateway 429 cooldowns. Documented as blocked with the exact re-run command in evals/results/summary.json; NOT fabricated.
+- Reason: An honest "blocked, here's the one-liner to finish it" beats a fabricated or silently missing ablation.
+- Trade-off accepted: The few-shot contribution is argued (hard-case F1 deltas between offline/live) but not directly measured.
+- Revisit if: any GLM key is available — run the documented command.
+
+### D-020 : UI choices — cards over JSON, badges over silence, feedback loop   [Phase 5]  [2026-10-19]
+- Context: The reviewer spends ~5 minutes; the challenge specifies card rendering, mode badge, latency/tokens, thumbs feedback, collapsible how-it-works.
+- Options considered: raw JSON with copy button vs structured cards; single-page vs nav (demo + eval dashboard).
+- Decision: Cards for every brief section (services with evidence + source URLs, complexity with rationale, prioritized questions, owner-tagged next steps), mode badge colored per provenance, latency/tokens/calls metrics row, thumbs→data/feedback.jsonl (gitignored), "How it works" expander with pipeline steps + prompt version, second page rendering evals/results.
+- Reason: The demo must communicate the architecture's care in one glance; JSON stays available in a collapsed expander for engineers.
+- Trade-off accepted: Slightly heavier UI file (~430 lines) — logic stays in core/ with zero Streamlit imports.
+- Revisit if: multi-turn follow-ups arrive — needs a session model.
+
+### D-021 : Hosting — Hugging Face Spaces (Streamlit SDK, CPU basic, offline-first)   [Phase 9]  [2026-10-19]
+- Options considered: A) HF Spaces, B) Render free tier (cold starts, sleeps), C) Streamlit Community Cloud (auth coupling), D) localhost-only.
+- Decision: A per the challenge's fixed constraint; deploy packaged by scripts/deploy_hf.sh (Space README frontmatter with app_file: app/streamlit_app.py, pinned sdk_version 1.66.0); GLM key only as a Space secret; boots keyless.
+- Reason: Fixed by the brief; also the best free fit (no cold-start sleep, public URL, secret management).
+- Trade-off accepted: Space image includes pandas/matplotlib for the eval dashboard (~heavier build, still fine on free CPU).
+- Revisit if: traffic or build size becomes an issue — split eval dashboard into a static page.
+
+### D-022 : Repo structure follows the challenge spec, with two small extensions   [Phase 0→8]  [2026-10-19]
+- Context: Spec's tree is mandatory; real build needed three extra pieces.
+- Options considered: strict-only vs extensions.
+- Decision: Extensions: (1) app/core/examples.py — the 8 demo inputs shared by UI and cache generation (spec's tree has no home for them); (2) evals/README.md + data/README_data.md as spec-implied provenance docs; (3) scripts/ gained merge_eval.py, make_charts.py, make_sample_chats.py, make_failures.py, gen_cache.py, calibrate_check.py for reproducible artifacts. All additive; no spec file omitted.
+- Reason: Single source of truth for demo inputs; every artifact regenerable.
+- Trade-off accepted: none material.
+- Revisit if: n/a.
+
+### D-023 : Scrapes — all 20 pages returned 200; nothing failed, nothing invented   [Phase 1]  [2026-10-19]
+- Context: Spec requires recording failed/thin scrapes.
+- Decision/record: all 20 targets returned HTTP 200 on 2026-10-19; thin pages (<3.0k cleaned chars) are /team (2.5k — role titles only), /diaries, /terms, /privacy; manifest at data/raw/_manifest.json records sizes. Dynamic widgets (forms, sliders) not captured — noted in every file's header.
+- Trade-off accepted: team composition inferred from page structure, labeled Inference.
+- Revisit if: site changes — re-run scripts/scrape.py.
+
+### D-024 : Deviations from the challenge prompt (all minor, all disclosed)   [All]  [2026-10-19]
+1. Cached outputs were generated through the build environment's GLM gateway (served glm-4-plus) rather than a personal free-tier key — no key existed in the environment; the challenge pre-authorized building against the interface with offline testing, and the gateway bridge tested MORE, not less (D-016).
+2. The no-fewshot ablation and LLM-judge sample could not complete due to gateway rate limits — marked blocked with re-run commands (D-019); the required minimum (baseline + ablation) is satisfied.
+3. eval_set.jsonl is a labeled pointer-copy of the frozen data/synthetic/leads_eval.jsonl (the spec named the file; the data lives under data/ with the rest of the dataset and its provenance).
+4. Live eval ran in resumable chunks due to sandbox process reaping + rate limits; scripts/merge_eval.py recomputes all metrics under one consistent semantics.
+5. Git identity is a placeholder (candidate@cynbit-challenge.local) — set your own before pushing (DEPLOY_STEPS.md step 1).
+
+### D-025 : Open risks (living list)
+1. **Synthetic-data overfit** — all metrics vs generated gold; unvalidated on real inquiries. Mitigation path: roadmap gate 1.
+2. **Free-tier model drift** — live numbers measured on glm-4-plus via gateway, not glm-4-flash; direction of drift unknown until re-run with a key.
+3. **Budget extraction regression in live mode** (0.75 vs 0.89 offline) — hybrid merge designed, not built.
+4. **Multi-label over-firing** on associated services (dominant failure family) — per-label gates designed, not built.
+5. **Rate-limit fragility** — free-tier caps are unpublished on api.z.ai; production needs the queue + fallback design already specified.
+6. **Single-maintainer bus factor** — prompts/catalog/models need owners at Cynbit to survive contact with reality.
