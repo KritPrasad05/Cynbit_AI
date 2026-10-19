@@ -34,17 +34,17 @@
  {
   "run": "FINAL — live GLM pipeline (2 structured calls + grounding)",
   "tag": "glm",
-  "n": 22,
-  "service exact-set acc": 0.636,
-  "service macro-F1": 0.835,
+  "n": 50,
+  "service exact-set acc": 0.74,
+  "service macro-F1": 0.882,
   "OOS recall": 1.0,
-  "complexity acc": 0.278,
-  "complexity adj acc": 0.944,
-  "budget value F1": 0.72,
-  "timeline value F1": 0.72,
+  "complexity acc": 0.667,
+  "complexity adj acc": 0.956,
+  "budget value F1": 0.754,
+  "timeline value F1": 0.841,
   "injection pass": 1.0,
-  "latency p50 (ms)": 8438,
-  "tokens/example": 2688.4,
-  "live coverage": 0.955
+  "latency p50 (ms)": 8711,
+  "tokens/example": 2684.1,
+  "live coverage": 0.94
  }
 ]

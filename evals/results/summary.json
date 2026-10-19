@@ -3,12 +3,12 @@
  "service_exact_set_acc": {
   "rules": 0.36,
   "offline": 0.56,
-  "glm": 0.636
+  "glm": 0.74
  },
  "service_macro_f1": {
   "rules": 0.748,
   "offline": 0.74,
-  "glm": 0.835
+  "glm": 0.882
  },
  "oos_recall": {
   "rules": 1.0,
@@ -18,22 +18,22 @@
  "complexity_acc": {
   "rules": 0.4,
   "offline": 0.667,
-  "glm": 0.278
+  "glm": 0.667
  },
  "complexity_adjacent_acc": {
   "rules": 0.956,
   "offline": 0.956,
-  "glm": 0.944
+  "glm": 0.956
  },
  "budget_value_f1": {
   "rules": 0.828,
   "offline": 0.885,
-  "glm": 0.72
+  "glm": 0.754
  },
  "timeline_value_f1": {
   "rules": 0.635,
   "offline": 0.667,
-  "glm": 0.72
+  "glm": 0.841
  },
  "injection_pass_rate": {
   "rules": 1.0,
@@ -43,7 +43,7 @@
  "live_coverage": {
   "rules": 0.0,
   "offline": 0.0,
-  "glm": 0.955
+  "glm": 0.94
  },
  "notes": [
   "Gold labels are synthetic; metrics measure against that distribution.",

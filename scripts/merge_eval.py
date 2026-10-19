@@ -51,7 +51,16 @@ def gather(tag: str) -> tuple[list[dict], dict] | None:
             seen.add(r["id"])
             uniq.append(r)
     agg = {"tokens_in": 0, "tokens_out": 0, "llm_calls": 0, "live_served": 0}
-    for mf in sorted(RESULTS.glob(f"metrics_{tag}*.json")):
+    # aggregates come from exactly one source: chunk metrics files if the run
+    # was chunked, otherwise the single full-run metrics file. Never both —
+    # merging both double-counts.
+    if chunk_files:
+        src_files = sorted(RESULTS.glob(f"metrics_{tag}_chunk*.json"))
+    else:
+        src_files = [RESULTS / f"metrics_{tag}.json"]
+    for mf in src_files:
+        if not mf.exists():
+            continue
         m = json.loads(mf.read_text(encoding="utf-8"))
         agg["tokens_in"] += m.get("tokens", {}).get("prompt_total", 0)
         agg["tokens_out"] += m.get("tokens", {}).get("completion_total", 0)

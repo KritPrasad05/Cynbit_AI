@@ -1,62 +1,62 @@
 {
- "n": 22,
- "service_macro_f1": 0.835,
- "service_exact_set_acc": 0.636,
+ "n": 50,
+ "service_macro_f1": 0.882,
+ "service_exact_set_acc": 0.74,
  "service_exact_set_ci95": [
-  0.43,
-  0.803
+  0.604,
+  0.841
  ],
  "service_per_class": {
   "ai_automation": {
-   "precision": 0.857,
-   "recall": 0.857,
-   "f1": 0.857
+   "precision": 0.938,
+   "recall": 0.938,
+   "f1": 0.938
   },
   "software_dev": {
-   "precision": 0.875,
-   "recall": 0.778,
-   "f1": 0.824
+   "precision": 0.933,
+   "recall": 0.875,
+   "f1": 0.903
   },
   "cloud": {
-   "precision": 0.667,
+   "precision": 0.727,
    "recall": 1.0,
-   "f1": 0.8
+   "f1": 0.842
   },
   "seo_marketing": {
-   "precision": 0.75,
+   "precision": 0.733,
    "recall": 1.0,
-   "f1": 0.857
+   "f1": 0.846
   }
  },
  "oos_recall": 1.0,
  "oos_precision": 1.0,
- "complexity_acc": 0.278,
- "complexity_adjacent_acc": 0.944,
+ "complexity_acc": 0.667,
+ "complexity_adjacent_acc": 0.956,
  "budget_metrics": {
-  "presence_acc": 0.864,
-  "value_precision": 0.643,
-  "value_recall": 0.818,
-  "value_f1": 0.72
+  "presence_acc": 0.94,
+  "value_precision": 0.719,
+  "value_recall": 0.793,
+  "value_f1": 0.754
  },
  "timeline_metrics": {
-  "presence_acc": 0.773,
-  "value_precision": 0.6,
-  "value_recall": 0.9,
-  "value_f1": 0.72
+  "presence_acc": 0.9,
+  "value_precision": 0.784,
+  "value_recall": 0.906,
+  "value_f1": 0.841
  },
  "injection_pass_rate": 1.0,
  "schema_validity": 1.0,
  "latency_ms": {
-  "mean": 8002,
-  "p50": 8438,
-  "p95": 9665
+  "mean": 8492,
+  "p50": 8711,
+  "p95": 13470
  },
  "tokens": {
-  "prompt_total": 46675,
-  "completion_total": 12469,
-  "per_example_mean": 2688.4
+  "prompt_total": 105569,
+  "completion_total": 28636,
+  "per_example_mean": 2684.1
  },
- "llm_calls": 42,
- "live_served": 21,
- "live_coverage": 0.955
+ "llm_calls": 94,
+ "live_served": 47,
+ "live_coverage": 0.94
 }
