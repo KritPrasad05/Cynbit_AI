@@ -13,7 +13,6 @@ sys.path.insert(0, str(REPO))
 import json
 
 from app.core.pipeline import DiscoveryPipeline, estimate_complexity, sanitize
-from app.core.schemas import ClassifyExtract
 
 
 def load(path):

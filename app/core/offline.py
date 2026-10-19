@@ -252,8 +252,6 @@ class OfflineEngine:
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.linear_model import LogisticRegression
         from sklearn.multiclass import OneVsRestClassifier
-        from sklearn.pipeline import FeatureUnion, Pipeline
-        from sklearn.preprocessing import FunctionTransformer
 
         train_texts = [r["text"] for r in self.train if r["labels"]["services"] != ["out_of_scope"]]
         train_labels = [
