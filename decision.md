@@ -45,3 +45,19 @@ build-machine time (UTC+5:30 context, dates YYYY-MM-DD).
 - Reason: scikit-learn is the honest classical baseline AND the offline classifier engine — one dependency serves both, proving the architecture earns its complexity. `openai` SDK is the most robust OpenAI-compatible client (timeouts, retries) and reviewers expect it.
 - Trade-off accepted: Heavier image than strictly minimal; acceptable for Spaces free CPU tier.
 - Revisit if: Spaces free tier image size becomes a problem — drop matplotlib+pandas from runtime and pre-render all eval artifacts as markdown/JSON.
+
+### D-006 : Opportunity selected — Discovery Copilot (inbound lead qualification & scoping)   [Phase 2]  [2026-10-19]
+- Context: 13 opportunities scored across 4 buckets (full matrix: docs/bonus/07_Opportunity_Scoring_Matrix.md).
+- Options considered: A) Discovery Copilot 4.80 (pros: maps to their step-1 process, compounding value; cons: inbound volume unknown), B) Revio review intelligence 4.65 (pros: best data availability; cons: crowded category, generic-sentiment trap, product launch status unclear), C) SEO/content engine 4.25 (pros: high feasibility; cons: table-stakes demo, subjective eval).
+- Decision: A. B and C recorded as runner-ups with explicit flip conditions (Revio live with paying customers / inbound volume negligible).
+- Reason: A automates Cynbit's own stated first lifecycle step, matches their marketed "agents that manage leads", attacks documented speed-to-lead economics (100x contact odds within 5 min, 78% first-responder wins — research notes M7), and is the optimal shape for a free-tier structured-output POC.
+- Trade-off accepted: The pick rests on an unverifiable assumption (meaningful inbound volume); mitigated by a parameterized ROI model and outbound-research use case.
+- Revisit if: Cynbit discloses referral-only demand or Revio customer traction.
+
+### D-007 : Scoring weights follow the brief, ties broken by strategic fit   [Phase 2]  [2026-10-19]
+- Context: Weights were fixed by the challenge (impact 30 / feasibility 25 / data 20 / demo 15 / fit 10).
+- Options considered: A) use brief weights as-is, B) re-weight toward feasibility.
+- Decision: A. One near-tie (4.80 vs 4.65) was broken by strategic fit and differentiation risk, documented in the matrix doc, not by silently changing weights.
+- Reason: Reproducibility and honesty of the scoring process matter more to the reviewer than the specific winner.
+- Trade-off accepted: None.
+- Revisit if: n/a.
