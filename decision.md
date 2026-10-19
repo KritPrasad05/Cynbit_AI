@@ -93,3 +93,43 @@ build-machine time (UTC+5:30 context, dates YYYY-MM-DD).
 - Reason: Guarantees the eval measures generalization incl. adversarial inputs; frozen file prevents accidental re-splitting.
 - Trade-off accepted: Single split, no variance estimate across folds; mitigated by reporting binomial CIs.
 - Revisit if: dataset grows past ~500 — move to grouped k-fold by template family.
+
+### D-012 : Architecture — six-step pipeline, two LLM calls, deterministic estimate   [Phase 5]  [2026-10-19]
+- Context: Challenge rule 6.1 requires a pipeline, not a mega-prompt.
+- Options considered: A) single mega-prompt producing the whole brief, B) five micro-calls (one per field), C) two structured calls (classify+extract; advise) with pure-Python sanitize/ground/estimate steps around them.
+- Decision: C, realized in app/core/pipeline.py.
+- Reason: Sanitization and grounding must be deterministic for security/verifiability; estimation must never be LLM-invented (pricing risk); two calls keep live latency ~6–15s and tokens ~3k/example instead of ~3x that with retries on one big JSON. Each step is unit-tested.
+- Trade-off accepted: Two round-trips add latency vs a mega-prompt; acceptable for a triage tool, and identical requests are cached.
+- Revisit if: GLM supports parallel tool calls cheaply — could overlap calls.
+
+### D-013 : Complexity estimator — train-calibrated classical model, rules provide rationale   [Phase 5]  [2026-10-19]
+- Context: Initial pure-keyword rules hit only 63% on TRAIN (template-embedded complexity is subtle).
+- Options considered: A) keep tuning rules by hand, B) LLM estimates (rejected: estimates must be deterministic and never hallucinated), C) char n-gram TF-IDF + logistic regression trained on the TRAIN split, with keyword rules retained for the user-facing rationale.
+- Decision: C (app/core/offline.py ComplexityModel; pipeline.estimate_complexity). Same estimator object used in live and offline modes.
+- Reason: Deterministic, no LLM, in-sample 100% / held-out 60% exact + 86% adjacent — honest numbers reported with the caveat that gold bands are template-derived.
+- Trade-off accepted: The band is less interpretable than pure rules; mitigated by showing keyword-rule rationale strings in the UI.
+- Revisit if: real historical project data arrives — replace with effort regression on real features.
+
+### D-014 : Offline Mode design — exact-match cache + deterministic engine   [Phase 5]  [2026-10-19]
+- Context: Challenge 6.4 mandates a useful keyless demo.
+- Options considered: A) stub returning "add a key", B) rules-only, C) precomputed live-GLM outputs for built-in examples + deterministic engine for arbitrary input.
+- Decision: C. data/synthetic/cached_outputs.json (8 examples, generated via live GLM through the repo's own GLMClient — build-time provenance in the file's meta) + TF-IDF/LogReg classifier + regex extraction + template advice. UI shows an unmissable OFFLINE badge distinguishing offline_cached vs offline_rules.
+- Reason: Reviewer clicks an example → sees REAL model output with zero keys; arbitrary inputs still get useful deterministic output; nothing is misrepresented as live inference.
+- Trade-off accepted: Cached outputs are frozen to prompt v3; regenerating requires a key (scripts/gen_cache.py).
+- Revisit if: prompts change — regenerate cache in the same commit.
+
+### D-015 : Prompt v2 → v3 — injection cases must still be analyzed   [Phase 5]  [2026-10-19]
+- Context: Live testing of v2 showed the model marking injection-bearing inquiries out_of_scope and dropping the underlying request (services=[], no estimate) — a weak security story and a classification failure.
+- Options considered: A) accept and document, B) clarify in the system prompt that injection is a security signal, never an intent signal, C) hard-filter injection text before the model.
+- Decision: B (prompts.py v3). Re-tested live: injection example now classifies software_dev with the injection surfaced as a sanitizer flag + risk.
+- Reason: Smallest change that fixes observed behavior; C would hide the security signal the eval needs to measure.
+- Trade-off accepted: Prompt-version bump invalidates earlier cached outputs — cache regenerated in the same session.
+- Revisit if: future live testing regresses.
+
+### D-016 : Build-time GLM access — local OpenAI-compatible bridge over the sandbox GLM gateway   [Phase 5]  [2026-10-19]
+- Context: No GLM_API_KEY in the build sandbox, but the sandbox exposes a GLM gateway via z-ai-web-dev-sdk (Node; served model glm-4-plus). The repo's live path is Python/openai-SDK.
+- Options considered: A) leave live path untested (challenge allows offline testing), B) reimplement pipeline calls in Node for cache generation (duplication, prompts drift), C) run a localhost OpenAI-compatible proxy (scripts/glm_proxy.mjs, sandbox-only, NOT in the repo) in front of the gateway and point GLMClient at it.
+- Decision: C. Consequences honestly recorded: live-path tests + cached outputs + live evals all ran through this bridge; the bridge serves glm-4-plus (gateway ignores the model param), NOT the free-tier glm-4-flash the repo defaults to. Latencies measured through the bridge include local HTTP overhead (negligible vs model time) and gateway queuing (material — see results README).
+- Reason: Exercises the exact production code path end-to-end without duplicating logic; gateway 429 rate limits were handled with pacing and retries (observed: bursts of ~25–35 calls trigger ~10–15 min cooldowns).
+- Trade-off accepted: Live numbers come from glm-4-plus, a stronger model than free-tier glm-4-flash; results are labeled accordingly and the reviewer can re-run with any key against the true free tier.
+- Revisit if: A real key becomes available — re-run `evals/run_eval.py --provider glm` and `scripts/gen_cache.py`.

@@ -33,6 +33,7 @@ from .prompts import (
     retry_feedback,
     user_advise,
     user_classify,
+    user_classify_noshot,
 )
 from .retrieval import get_grounder
 from .schemas import (
@@ -214,11 +215,24 @@ def estimate_complexity(ce: ClassifyExtract, text: str, cx_model=None) -> Estima
 
 class DiscoveryPipeline:
     """Mode-agnostic orchestrator. provider="glm" uses live LLM with automatic
-    offline fallback; provider="offline" never touches the network."""
+    offline fallback; provider="offline" never touches the network.
 
-    def __init__(self, provider: str = "offline", llm: GLMClient | None = None) -> None:
+    Ablation flags (live mode only, used by evals/run_eval.py):
+      use_grounding=False — skip catalog-evidence attachment (ablation).
+      use_fewshot=False   — call 1 without the few-shot block (ablation).
+    """
+
+    def __init__(
+        self,
+        provider: str = "offline",
+        llm: GLMClient | None = None,
+        use_grounding: bool = True,
+        use_fewshot: bool = True,
+    ) -> None:
         self.provider = provider
         self.llm = llm
+        self.use_grounding = use_grounding
+        self.use_fewshot = use_fewshot
         self.engine = get_engine()
         self.grounder = get_grounder()
         self._cache: OrderedDict[str, LeadBrief] = OrderedDict()  # in-memory request cache
@@ -261,15 +275,36 @@ class DiscoveryPipeline:
         r1 = self.llm.generate(
             messages=[
                 {"role": "system", "content": SYSTEM_CLASSIFY},
-                {"role": "user", "content": user_classify(san.delimited_text, san.note_for_model)},
+                {
+                    "role": "user",
+                    "content": (
+                        user_classify(san.delimited_text, san.note_for_model)
+                        if self.use_fewshot
+                        else user_classify_noshot(san.delimited_text, san.note_for_model)
+                    ),
+                },
             ],
             schema=ClassifyExtract,
             temperature=0.1,
             retry_feedback=retry_feedback("ClassifyExtract schema", 1),
         )
-        ce = ClassifyExtract.model_validate_json(_strip(r1.content))
+        ce = ClassifyExtract.model_validate_json(_strip_fences(r1.content))
         est = estimate_complexity(ce, san.sanitized_text, self.engine.complexity_model())
-        matches, evidence_lines = self._ground(ce, san.sanitized_text)
+        if self.use_grounding:
+            matches, evidence_lines = self._ground(ce, san.sanitized_text)
+        else:
+            matches = [
+                ServiceMatch(
+                    service_id=svc,
+                    service_name=svc,
+                    fit="primary" if not idx else "secondary",
+                    confidence=0.5,
+                    evidence="(ablation: grounding disabled)",
+                    source_url="",
+                )
+                for idx, svc in enumerate(ce.services)
+            ]
+            evidence_lines = ["Ablation run: grounding step disabled."]
 
         brief_ctx = _brief_context(ce, est, san, matches)
         r2 = self.llm.generate(
@@ -281,7 +316,7 @@ class DiscoveryPipeline:
             temperature=0.3,
             retry_feedback=retry_feedback("Advise schema", 2),
         )
-        adv = Advise.model_validate_json(_strip(r2.content))
+        adv = Advise.model_validate_json(_strip_fences(r2.content))
 
         latency = int((time.perf_counter() - start) * 1000)
         return _assemble(

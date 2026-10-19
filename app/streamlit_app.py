@@ -61,6 +61,7 @@ def mode_badge(mode: str) -> None:
         "glm_live_fallback_offline": ("🟠 LIVE→OFFLINE FALLBACK", "orange"),
         "offline_cached": ("🔵 OFFLINE MODE: precomputed GLM output", "blue"),
         "offline_rules": ("⚪ OFFLINE MODE: rule-based output", "gray"),
+        "baseline_rules": ("🟫 RULES BASELINE (eval only)", "gray"),
     }
     text, color = labels.get(mode, (mode, "gray"))
     st.markdown(

@@ -130,7 +130,13 @@ class Advise(BaseModel):
 class Provenance(BaseModel):
     """How this output was produced — always surfaced in the UI."""
 
-    mode: Literal["glm_live", "glm_live_fallback_offline", "offline_rules", "offline_cached"]
+    mode: Literal[
+        "glm_live",
+        "glm_live_fallback_offline",
+        "offline_rules",
+        "offline_cached",
+        "baseline_rules",
+    ]
     model: str
     prompt_version: str
     schema_version: str = SCHEMA_VERSION
