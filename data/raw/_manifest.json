@@ -1,0 +1,26 @@
+{
+  "https://www.cynbit.in/blog/best-crm-automation-strategies": {
+    "file": "data/raw/blog_best-crm-automation-strategies.md",
+    "status": 200,
+    "chars": 8049,
+    "retrieved_on": "2026-10-19"
+  },
+  "https://www.cynbit.in/blog/small-business-ai-automation": {
+    "file": "data/raw/blog_small-business-ai-automation.md",
+    "status": 200,
+    "chars": 8289,
+    "retrieved_on": "2026-10-19"
+  },
+  "https://www.cynbit.in/blog/ai-digital-marketing-revolution": {
+    "file": "data/raw/blog_ai-digital-marketing-revolution.md",
+    "status": 200,
+    "chars": 8107,
+    "retrieved_on": "2026-10-19"
+  },
+  "https://www.cynbit.in/blog/ai-powered-business-guide": {
+    "file": "data/raw/blog_ai-powered-business-guide.md",
+    "status": 200,
+    "chars": 8847,
+    "retrieved_on": "2026-10-19"
+  }
+}
