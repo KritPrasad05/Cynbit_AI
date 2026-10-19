@@ -1,0 +1,32 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Data artifacts that are regenerable, plus anything potentially sensitive
+data/feedback.jsonl
+*.log
+
+# Node (only used locally for cache generation, not part of the app)
+node_modules/
+package-lock.json
+package.json
