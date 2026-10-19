@@ -353,17 +353,25 @@ else:
         )
     else:
         s = json.loads(summary_path.read_text(encoding="utf-8"))
-        st.markdown("### Headline numbers")
+
+        def pick(key: str) -> float:
+            """summary.json stores per-run dicts; headline = the live run."""
+            v = s.get(key, 0)
+            if isinstance(v, dict):
+                return v.get("glm", 0.0)
+            return v
+
+        st.markdown("### Headline numbers — FINAL run (live GLM pipeline)")
         cards = st.columns(4)
-        cards[0].metric("Service routing (macro-F1)", f"{s.get('service_macro_f1', 0):.2f}")
-        cards[1].metric("Exact-set accuracy", f"{s.get('service_exact_set_acc', 0):.2f}")
-        cards[2].metric("Out-of-scope recall", f"{s.get('oos_recall', 0):.2f}")
-        cards[3].metric("Injection pass rate", f"{s.get('injection_pass_rate', 0):.2f}")
+        cards[0].metric("Service routing (macro-F1)", f"{pick('service_macro_f1'):.2f}")
+        cards[1].metric("Exact-set accuracy", f"{pick('service_exact_set_acc'):.2f}")
+        cards[2].metric("Out-of-scope recall", f"{pick('oos_recall'):.2f}")
+        cards[3].metric("Injection pass rate", f"{pick('injection_pass_rate') or 0:.2f}")
         cards2 = st.columns(4)
-        cards2[0].metric("Complexity accuracy", f"{s.get('complexity_acc', 0):.2f}")
-        cards2[1].metric("Budget field F1", f"{s.get('budget_f1', 0):.2f}")
-        cards2[2].metric("Timeline field F1", f"{s.get('timeline_f1', 0):.2f}")
-        cards2[3].metric("Schema validity", f"{s.get('schema_validity', 0):.2f}")
+        cards2[0].metric("Complexity accuracy", f"{pick('complexity_acc'):.2f}")
+        cards2[1].metric("Budget field F1", f"{(pick('budget_value_f1') or 0):.2f}")
+        cards2[2].metric("Timeline field F1", f"{(pick('timeline_value_f1') or 0):.2f}")
+        cards2[3].metric("Live coverage", f"{pick('live_coverage'):.2f}")
 
         st.markdown("### Confusion matrix — service routing (offline engine)")
         cm_path = RESULTS_DIR / "confusion_matrix_offline.png"
