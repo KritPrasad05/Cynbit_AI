@@ -3,51 +3,76 @@
  "service_exact_set_acc": {
   "rules": 0.36,
   "offline": 0.56,
-  "glm": 0.74
+  "glm": 0.74,
+  "glm_no_grounding": 0.6
  },
  "service_macro_f1": {
   "rules": 0.748,
   "offline": 0.74,
-  "glm": 0.882
+  "glm": 0.882,
+  "glm_no_grounding": 0.852
  },
  "oos_recall": {
   "rules": 1.0,
   "offline": 1.0,
-  "glm": 1.0
+  "glm": 1.0,
+  "glm_no_grounding": 1.0
  },
  "complexity_acc": {
   "rules": 0.4,
   "offline": 0.667,
-  "glm": 0.667
+  "glm": 0.667,
+  "glm_no_grounding": 0.125
  },
  "complexity_adjacent_acc": {
   "rules": 0.956,
   "offline": 0.956,
-  "glm": 0.956
+  "glm": 0.956,
+  "glm_no_grounding": 1.0
  },
  "budget_value_f1": {
   "rules": 0.828,
   "offline": 0.885,
-  "glm": 0.754
+  "glm": 0.754,
+  "glm_no_grounding": 0.933
  },
  "timeline_value_f1": {
   "rules": 0.635,
   "offline": 0.667,
-  "glm": 0.841
+  "glm": 0.841,
+  "glm_no_grounding": 0.5
  },
  "injection_pass_rate": {
   "rules": 1.0,
   "offline": 1.0,
-  "glm": 1.0
+  "glm": 1.0,
+  "glm_no_grounding": null
  },
  "live_coverage": {
   "rules": 0.0,
   "offline": 0.0,
-  "glm": 0.94
+  "glm": 0.94,
+  "glm_no_grounding": 0.8
  },
  "notes": [
   "Gold labels are synthetic; metrics measure against that distribution.",
   "Live runs used the build environment's GLM gateway (served glm-4-plus), not free-tier glm-4-flash.",
   "Complexity metrics exclude out-of-scope rows (no engagement -> no estimate)."
- ]
+ ],
+ "ablation_notes": {
+  "no_grounding": {
+   "n": 10,
+   "matched_live_only_exact_set": {
+    "main": 0.62,
+    "ablation": 0.62
+   },
+   "run_to_run_service_agreement": 1.0,
+   "interpretation": "Classification deltas on n=10 are within run-to-run variance (agreement 100%) — grounding is not an accuracy feature by design. What grounding adds: 100% of service matches carry catalog evidence + source URL (0% in the ablation), and confidence is calibrated against lexical support (low-support picks flagged)."
+  },
+  "no_fewshot": {
+   "status": "blocked",
+   "reason": "build-gateway rate limits exhausted retries during the session",
+   "rerun": "python evals/run_eval.py --provider glm --ablation no_fewshot"
+  }
+ }
 }

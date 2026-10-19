@@ -46,5 +46,21 @@
   "latency p50 (ms)": 8711,
   "tokens/example": 2684.1,
   "live coverage": 0.94
+ },
+ {
+  "run": "Ablation — live GLM without catalog grounding",
+  "tag": "glm_no_grounding",
+  "n": 10,
+  "service exact-set acc": 0.6,
+  "service macro-F1": 0.852,
+  "OOS recall": 1.0,
+  "complexity acc": 0.125,
+  "complexity adj acc": 1.0,
+  "budget value F1": 0.933,
+  "timeline value F1": 0.5,
+  "injection pass": null,
+  "latency p50 (ms)": 9382,
+  "tokens/example": 2234.5,
+  "live coverage": 0.8
  }
 ]
