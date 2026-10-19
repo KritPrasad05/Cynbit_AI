@@ -2,10 +2,10 @@
  "meta": {
   "generated_on": "2026-10-19",
   "provider": "live GLM via OpenAI-compatible endpoint",
-  "model": "glm-4-flash",
-  "base_url": "http://127.0.0.1:8787/v1",
+  "model": "glm-4-plus (served by build-environment GLM gateway; client requested glm-4-flash — gateway ignores the model param)",
+  "base_url": "http://127.0.0.1:8787/v1 (local OpenAI-compatible bridge over the build gateway — see decision.md D-016)",
   "prompt_version": "v3",
-  "note": "SYNTHETIC demo inputs; REAL live-model outputs captured once for Offline Mode replay. Regenerate with scripts/gen_cache.py."
+  "note": "SYNTHETIC demo inputs; REAL live-model outputs captured once for Offline Mode replay. Regenerate with scripts/gen_cache.py (any GLM key)."
  },
  "examples": [
   {
