@@ -1,0 +1,62 @@
+{
+ "n": 10,
+ "service_macro_f1": 0.927,
+ "service_exact_set_acc": 0.7,
+ "service_exact_set_ci95": [
+  0.397,
+  0.892
+ ],
+ "service_per_class": {
+  "ai_automation": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "software_dev": {
+   "precision": 1.0,
+   "recall": 0.833,
+   "f1": 0.909
+  },
+  "cloud": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "seo_marketing": {
+   "precision": 0.667,
+   "recall": 1.0,
+   "f1": 0.8
+  }
+ },
+ "oos_recall": 1.0,
+ "oos_precision": 1.0,
+ "complexity_acc": 0.1,
+ "complexity_adjacent_acc": 0.8,
+ "budget_metrics": {
+  "presence_acc": 0.9,
+  "value_precision": 0.875,
+  "value_recall": 1.0,
+  "value_f1": 0.933
+ },
+ "timeline_metrics": {
+  "presence_acc": 0.8,
+  "value_precision": 0.4,
+  "value_recall": 0.667,
+  "value_f1": 0.5
+ },
+ "injection_pass_rate": null,
+ "schema_validity": 1.0,
+ "latency_ms": {
+  "mean": 7323,
+  "p50": 8421,
+  "p95": 9335
+ },
+ "tokens": {
+  "prompt_total": 22163,
+  "completion_total": 5952,
+  "per_example_mean": 2811.5
+ },
+ "llm_calls": 20,
+ "live_served": 10,
+ "live_coverage": 1.0
+}

@@ -30,8 +30,8 @@
  },
  "oos_recall": 1.0,
  "oos_precision": 1.0,
- "complexity_acc": 0.36,
- "complexity_adjacent_acc": 0.86,
+ "complexity_acc": 0.4,
+ "complexity_adjacent_acc": 0.956,
  "budget_metrics": {
   "presence_acc": 0.88,
   "value_precision": 0.828,

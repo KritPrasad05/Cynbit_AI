@@ -197,7 +197,7 @@ def run(rows: list[dict], args) -> dict:
                 for attempt in range(3):  # retry non-live results (429s etc.)
                     if brief.provenance.mode == "glm_live":
                         break
-                    print(f"    not live ({brief.provenance.mode}); backoff retry {attempt+1}")
+                    print(f"    not live ({brief.provenance.mode}); backoff retry {attempt+1}", flush=True)
                     pipe._cache.clear()
                     time.sleep(20 + attempt * 30)
                     brief = pipe.run(text)
@@ -310,15 +310,18 @@ def compute_metrics(result: dict) -> dict:
     oos_recall = oos_tp / (oos_tp + oos_fn) if oos_tp + oos_fn else 0.0
     oos_prec = oos_tp / (oos_tp + oos_fp) if oos_tp + oos_fp else 0.0
 
-    # -- complexity
-    cx_ok = [e for e in pe if e["pred_complexity"] == e["gold_complexity"]]
-    cx_acc = len(cx_ok) / n
+    # -- complexity (out-of-scope rows excluded: no engagement -> no estimate,
+    #    comparing against a gold band there is meaningless)
+    cx_rows = [e for e in pe if not e["gold_oos"]]
+    cx_n = len(cx_rows) or 1
+    cx_ok = [e for e in cx_rows if e["pred_complexity"] == e["gold_complexity"]]
+    cx_acc = len(cx_ok) / cx_n
     cx_adj = sum(
         1
-        for e in pe
+        for e in cx_rows
         if e["pred_complexity"] == e["gold_complexity"]
         or (e["pred_complexity"] and e["gold_complexity"] in ADJACENT.get(e["pred_complexity"], set()))
-    ) / n
+    ) / cx_n
 
     # -- extraction fields
     def field_metrics(field_gold, field_pred):
@@ -433,14 +436,20 @@ def main() -> int:
     ap.add_argument("--baseline", default=None, choices=[None, "rules"])
     ap.add_argument("--ablation", default=None, choices=[None, "no_grounding", "no_fewshot"])
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--start", type=int, default=0, help="first eval row (inclusive)")
+    ap.add_argument("--end", type=int, default=None, help="last eval row (exclusive)")
     ap.add_argument("--sleep", type=float, default=8.0, help="seconds between live examples")
     args = ap.parse_args()
 
     rows = load_eval()
+    if args.end is not None or args.start:
+        rows = rows[args.start : (args.end if args.end is not None else len(rows))]
     if args.limit:
         rows = rows[: args.limit]
 
     tag = args.baseline or (args.provider if not args.ablation else f"{args.provider}_{args.ablation}")
+    if args.start or args.end is not None:
+        tag = f"{tag}_chunk{args.start}_{args.end if args.end is not None else 'end'}"
     print(f"running eval: tag={tag}, n={len(rows)}")
 
     result = run(rows, args)

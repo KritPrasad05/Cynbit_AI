@@ -1,0 +1,30 @@
+{
+ "measured_on": "live GLM runs (build gateway, served glm-4-plus; n live examples)",
+ "tokens_per_example_mean": 2688.4,
+ "latency_p50_ms": 8438,
+ "latency_p95_ms": 9665,
+ "projections": {
+  "100": {
+   "requests_per_month": 100,
+   "tokens_per_month": 268840,
+   "cost_usd_per_month_free_tier": 0.0,
+   "note": "glm-4-flash / GLM-4.5-Flash free tier: $0 per token within rate limits (published); rate caps unpublished on api.z.ai (third-party estimate ~1 rps / ~1000 per day). A paid fallback (e.g. GLM flash tiers at ~$0.06/M input) would cost well under $1/month at these volumes."
+  },
+  "1000": {
+   "requests_per_month": 1000,
+   "tokens_per_month": 2688400,
+   "cost_usd_per_month_free_tier": 0.0,
+   "note": "glm-4-flash / GLM-4.5-Flash free tier: $0 per token within rate limits (published); rate caps unpublished on api.z.ai (third-party estimate ~1 rps / ~1000 per day). A paid fallback (e.g. GLM flash tiers at ~$0.06/M input) would cost well under $1/month at these volumes."
+  },
+  "10000": {
+   "requests_per_month": 10000,
+   "tokens_per_month": 26884000,
+   "cost_usd_per_month_free_tier": 0.0,
+   "note": "glm-4-flash / GLM-4.5-Flash free tier: $0 per token within rate limits (published); rate caps unpublished on api.z.ai (third-party estimate ~1 rps / ~1000 per day). A paid fallback (e.g. GLM flash tiers at ~$0.06/M input) would cost well under $1/month at these volumes."
+  }
+ },
+ "offline_mode": {
+  "cost_usd": 0.0,
+  "latency_p50_ms": 2
+ }
+}
