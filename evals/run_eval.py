@@ -6,11 +6,14 @@ prompt tuning or few-shot selection) and writes metrics to evals/results/.
 Usage:
     python evals/run_eval.py                          # offline engine (no key)
     python evals/run_eval.py --baseline rules         # rules-only baseline
-    python evals/run_eval.py --provider glm [--sleep 8] [--limit 20]
-                                                      # live GLM (needs key)
-    python evals/run_eval.py --provider glm --ablation no_grounding
-    python evals/run_eval.py --provider glm --ablation no_fewshot
+    python evals/run_eval.py --provider groq [--sleep 20] [--limit 20]
+                                                      # live Groq (needs GROQ_API_KEY)
+    python evals/run_eval.py --provider groq --ablation no_grounding
+    python evals/run_eval.py --provider groq --ablation no_fewshot
     python evals/run_eval.py --judge                  # LLM-as-judge on sample
+
+Groq free tier (verified 2026-10-20): 30 RPM / 1K RPD / 8K TPM per model —
+the default --sleep 20 keeps a 2-call pipeline under the 8K tokens/min cap.
 
 Metric definitions: evals/README.md. All numbers trace to files in
 evals/results/ (per-example predictions are saved for auditability).
@@ -109,14 +112,14 @@ def baseline_services(text: str, grounder) -> list[str]:
 
 
 def build_pipeline(args):
-    if args.provider == "glm":
-        from app.core.llm_client import GLMClient
+    if args.provider == "groq":
+        from app.core.llm_client import GroqClient
 
-        llm = GLMClient()
+        llm = GroqClient()
         from app.core.pipeline import DiscoveryPipeline
 
         return DiscoveryPipeline(
-            provider="glm",
+            provider="groq",
             llm=llm,
             use_grounding=(args.ablation != "no_grounding"),
             use_fewshot=(args.ablation != "no_fewshot"),
@@ -193,16 +196,16 @@ def run(rows: list[dict], args) -> dict:
             )
         else:
             brief = pipe.run(text)
-            if args.provider == "glm":
+            if args.provider == "groq":
                 for attempt in range(3):  # retry non-live results (429s etc.)
-                    if brief.provenance.mode == "glm_live":
+                    if brief.provenance.mode == "groq_live":
                         break
                     print(f"    not live ({brief.provenance.mode}); backoff retry {attempt+1}", flush=True)
                     pipe._cache.clear()
                     time.sleep(20 + attempt * 30)
                     brief = pipe.run(text)
         latency = int((time.perf_counter() - t0) * 1000)
-        if args.provider == "glm":
+        if args.provider == "groq":
             time.sleep(max(0, args.sleep))
 
         prov = brief.provenance
@@ -210,7 +213,7 @@ def run(rows: list[dict], args) -> dict:
         tokens_in += prov.prompt_tokens
         tokens_out += prov.completion_tokens
         llm_calls += prov.llm_calls
-        if prov.mode == "glm_live":
+        if prov.mode == "groq_live":
             live_served += 1
 
         pred_services = [m.service_id for m in brief.services]
@@ -432,13 +435,18 @@ def confusion_matrix_png(pe: list[dict], out_path: Path, title: str) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--provider", default="offline", choices=["offline", "glm"])
+    ap.add_argument("--provider", default="offline", choices=["offline", "groq"])
     ap.add_argument("--baseline", default=None, choices=[None, "rules"])
     ap.add_argument("--ablation", default=None, choices=[None, "no_grounding", "no_fewshot"])
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--start", type=int, default=0, help="first eval row (inclusive)")
     ap.add_argument("--end", type=int, default=None, help="last eval row (exclusive)")
-    ap.add_argument("--sleep", type=float, default=8.0, help="seconds between live examples")
+    ap.add_argument(
+        "--sleep",
+        type=float,
+        default=20.0,
+        help="seconds between live examples (Groq free tier: 30 RPM, 8K TPM per model)",
+    )
     args = ap.parse_args()
 
     rows = load_eval()
@@ -463,7 +471,7 @@ def main() -> int:
     (RESULTS / f"metrics_{tag}.json").write_text(
         json.dumps(metrics, ensure_ascii=False, indent=1), encoding="utf-8"
     )
-    if tag in ("offline", "glm"):
+    if tag in ("offline", "groq"):
         confusion_matrix_png(
             result["per_example"],
             RESULTS / f"confusion_matrix_{tag}.png",

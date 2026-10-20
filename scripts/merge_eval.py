@@ -1,11 +1,14 @@
 """merge_eval.py — merge chunked live runs and build the final results bundle.
 
-The build environment's GLM gateway rate-limits bursts, so live evals run in
-chunks (run_eval.py --start/--end). This script:
-  1. merges per_example_{tag}[_chunk*].jsonl files for each tag,
+Live evals can be rate-limit chunked (run_eval.py --start/--end). This script:
+  1. merges per_example_{tag}[_chunk*].jsonl files for each discovered tag,
   2. recomputes full metrics (single consistent semantics),
   3. writes metrics_{tag}.json + confusion matrices,
   4. writes the cross-run summary.json, metrics_table.json, cost_latency.json.
+
+Tags are discovered from the files present, so both the current live provider
+(groq, since the D-026 migration) and the historical GLM runs (2026-10-19)
+merge side by side — numbers keep their provenance.
 
 Usage: python scripts/merge_eval.py
 """
@@ -23,14 +26,27 @@ sys.path.insert(0, str(REPO / "evals"))
 RESULTS = REPO / "evals" / "results"
 from run_eval import compute_metrics, confusion_matrix_png  # noqa: E402
 
-TAGS = ["rules", "offline", "glm", "glm_no_grounding", "glm_no_fewshot"]
+# Priority order for discovery; only tags with per-example files are merged.
+TAGS = [
+    "rules",
+    "offline",
+    "groq",
+    "groq_no_grounding",
+    "groq_no_fewshot",
+    "glm",  # historical live provider (pre-migration, 2026-10-19)
+    "glm_no_grounding",
+    "glm_no_fewshot",
+]
 
 LABELS = {
     "rules": "Baseline B0 — keyword rules (no trained components)",
     "offline": "Baseline B1 — Offline engine (TF-IDF/LogReg + templates)",
-    "glm": "FINAL — live GLM pipeline (2 structured calls + grounding)",
-    "glm_no_grounding": "Ablation — live GLM without catalog grounding",
-    "glm_no_fewshot": "Ablation — live GLM without few-shot examples",
+    "groq": "FINAL — live Groq pipeline (2 structured calls + grounding)",
+    "groq_no_grounding": "Ablation — live Groq without catalog grounding",
+    "groq_no_fewshot": "Ablation — live Groq without few-shot examples",
+    "glm": "HISTORICAL — live GLM pipeline (pre-migration run, 2026-10-19)",
+    "glm_no_grounding": "HISTORICAL ablation — live GLM without catalog grounding",
+    "glm_no_fewshot": "HISTORICAL ablation — live GLM without few-shot examples",
 }
 
 
@@ -92,7 +108,7 @@ def main() -> int:
         (RESULTS / f"metrics_{tag}.json").write_text(
             json.dumps(m, ensure_ascii=False, indent=1), encoding="utf-8"
         )
-        if tag in ("offline", "glm"):
+        if tag in ("offline", "groq", "glm"):
             confusion_matrix_png(
                 rows,
                 RESULTS / f"confusion_matrix_{tag}.png",
@@ -127,7 +143,9 @@ def main() -> int:
         "live_coverage": {t: g(t, "live_coverage") for t in table},
         "notes": [
             "Gold labels are synthetic; metrics measure against that distribution.",
-            "Live runs used the build environment's GLM gateway (served glm-4-plus), not free-tier glm-4-flash.",
+            "The 'glm' run is HISTORICAL: captured 2026-10-19 via the build environment's "
+            "GLM gateway (served glm-4-plus), before the live provider migrated to Groq "
+            "(decision.md D-026). Rerun live with: python evals/run_eval.py --provider groq",
             "Complexity metrics exclude out-of-scope rows (no engagement -> no estimate).",
         ],
     }
@@ -159,13 +177,20 @@ def main() -> int:
     )
 
     # --- cost & latency projections ---------------------------------------------
-    glm = table.get("glm")
-    if glm:
-        tok_ex = glm["tokens"]["per_example_mean"]
-        p50 = glm["latency_ms"]["p50"]
-        p95 = glm["latency_ms"]["p95"]
+    # Prefer a current Groq run; fall back to the historical GLM run.
+    live = table.get("groq") or table.get("glm")
+    if live:
+        tok_ex = live["tokens"]["per_example_mean"]
+        p50 = live["latency_ms"]["p50"]
+        p95 = live["latency_ms"]["p95"]
+        is_groq = "groq" in table
         cost = {
-            "measured_on": "live GLM runs (build gateway, served glm-4-plus; n live examples)",
+            "measured_on": (
+                "live Groq runs (openai/gpt-oss-120b; n live examples)"
+                if is_groq
+                else "live GLM runs (build gateway, served glm-4-plus; n live examples) — "
+                "HISTORICAL, pre-migration (D-026); refresh with --provider groq"
+            ),
             "tokens_per_example_mean": tok_ex,
             "latency_p50_ms": p50,
             "latency_p95_ms": p95,
@@ -174,9 +199,15 @@ def main() -> int:
                     "requests_per_month": v,
                     "tokens_per_month": int(tok_ex * v),
                     "cost_usd_per_month_free_tier": 0.0,
-                    "note": "glm-4-flash / GLM-4.5-Flash free tier: $0 per token within rate limits "
-                    "(published); rate caps unpublished on api.z.ai (third-party estimate ~1 rps / ~1000 per day). "
-                    "A paid fallback (e.g. GLM flash tiers at ~$0.06/M input) would cost well under $1/month at these volumes.",
+                    "note": (
+                        "Groq free tier (verified 2026-10-20): $0 within rate limits — "
+                        "30 requests/min, 1K requests/day, 8K tokens/min, 200K tokens/day "
+                        "per model (console.groq.com/docs/rate-limits). At ~2.7k tokens per "
+                        "inquiry the 8K TPM cap allows ~3 inquiries/min sustained. On the "
+                        "Developer tier, openai/gpt-oss-20b costs $0.075/M input + $0.30/M "
+                        "output -> ~$0.29/month at 1k inquiries; gpt-oss-120b ~$0.57/month "
+                        "(console.groq.com/docs/models)."
+                    )
                 }
                 for v in (100, 1000, 10000)
             },
@@ -189,7 +220,7 @@ def main() -> int:
             json.dumps(cost, ensure_ascii=False, indent=1), encoding="utf-8"
         )
 
-    print("\nwrote summary.json, metrics_table.json" + (", cost_latency.json" if glm else ""))
+    print("\nwrote summary.json, metrics_table.json" + (", cost_latency.json" if live else ""))
     return 0
 
 

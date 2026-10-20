@@ -15,7 +15,9 @@ REPO = Path(__file__).resolve().parents[1]
 RES = REPO / "evals" / "results"
 
 rows = []
-for f in sorted(RES.glob("per_example_glm*.jsonl")):
+for f in sorted(
+    set(RES.glob("per_example_glm*.jsonl")) | set(RES.glob("per_example_groq*.jsonl"))
+):
     rows += [json.loads(l) for l in f.read_text(encoding="utf-8").splitlines() if l.strip()]
 seen, uniq = set(), []
 for r in rows:
@@ -53,7 +55,8 @@ worst = [e for e in ranked if score(e) >= 3][:6]
 out = [
     "# Failure analysis — worst live-run outputs",
     "",
-    "Selected from `per_example_glm*.jsonl` (live GLM run, 50-example held-out",
+    "Selected from `per_example_glm*.jsonl` / `per_example_groq*.jsonl` (live",
+    "LLM runs — historical GLM and/or current Groq — on the 50-example held-out",
     "split) by composite severity: OOS mismatch (3) > service-set mismatch (4)",
     "> complexity mismatch (2) > extraction miss (1 each). Root causes are the",
     "author's analysis of each case — see the pattern summary at the end.",

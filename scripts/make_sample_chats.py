@@ -1,10 +1,12 @@
 """make_sample_chats.py — render sample_chats/ transcripts from real runs.
 
-Sources: (a) cached_outputs.json entries = genuine live-GLM runs of the demo
-examples (provenance inside that file); (b) fresh offline-engine runs on novel
-synthetic inputs (including failure/edge cases). Each transcript records the
-mode and latency actually used, plus a hand-written annotation stub that the
-author completes in the markdown.
+Sources: (a) cached_outputs.json entries = genuine live-LLM runs of the demo
+examples (captured 2026-10-19 with the previous GLM provider — provenance
+inside that file; regenerate with scripts/gen_cache.py + a Groq key);
+(b) fresh offline-engine runs on novel synthetic inputs (including
+failure/edge cases). Each transcript records the mode and latency actually
+used, plus a hand-written annotation stub that the author completes in the
+markdown.
 """
 
 from __future__ import annotations
@@ -106,7 +108,7 @@ def render(md_name: str, title: str, text: str, brief, annotation: str, extra_me
 
 
 def main() -> None:
-    # (a) live-GLM transcripts from the cache
+    # (a) live-LLM transcripts from the cache (historical GLM runs, D-026)
     cache = json.loads((REPO / "data/synthetic/cached_outputs.json").read_text(encoding="utf-8"))
     anns = {
         "ai_doc_chatbot": "STRAIGHTFORWARD LIVE RUN: two LLM calls; correct service (AI automation), budget and timeline extracted, questions are exactly what a solutions architect would ask first. Note evidence lines trace to the public catalog.",
@@ -127,7 +129,8 @@ def main() -> None:
             ex["input"],
             brief,
             anns[ex["example_id"]],
-            f"Source: precomputed **live GLM** run (see data/synthetic/cached_outputs.json meta: "
+            f"Source: precomputed **live LLM** run (historical GLM provider, see "
+            f"data/synthetic/cached_outputs.json meta: "
             f"{cache['meta']['model']} via {cache['meta']['base_url']}, {cache['meta']['generated_on']}).",
         )
 
