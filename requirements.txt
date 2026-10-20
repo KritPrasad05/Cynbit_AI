@@ -1,4 +1,7 @@
-# Runtime (app + eval). Pins verified in the build environment 2026-10-19.
+# Runtime (app + eval). Pins verified in the build environment 2026-10-20.
+# `openai` is used for the LIVE path only — Groq exposes an OpenAI-compatible
+# endpoint at https://api.groq.com/openai/v1 (decision.md D-026). Offline Mode
+# needs none of the network-capable packages.
 streamlit==1.66.0
 pydantic==2.12.5
 scikit-learn==1.5.2
@@ -7,6 +10,6 @@ openai==3.35.1
 pandas==2.2.3
 matplotlib==3.9.2
 
-# Dev / CI extras (not required at runtime on Hugging Face Spaces):
+# Dev / CI extras (not required at runtime; install for tests/lint):
 #   pytest==9.0.2
 #   ruff==0.17.1
