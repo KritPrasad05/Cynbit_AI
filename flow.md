@@ -13,7 +13,7 @@ flowchart TD
     D --> POC[Phase 5 POC<br/>pipeline + offline engine + Streamlit]
     POC --> EV[Phase 6 evaluation<br/>2 baselines + live + ablations]
     EV --> TAR[03 Technical Approach Report]
-    POC --> DEP[Phase 9 deployment<br/>HF Space + GitHub]
+    POC --> DEP[Phase 9 deployment<br/>local run + GitHub · optional SCC]
     TAR --> META[Phase 8 meta-docs<br/>README · decision.md · flow.md · report.md]
     DEP --> META
     META --> QA[Phase 10 final QA checklist]

@@ -30,7 +30,7 @@ historical live numbers, and a coarse complexity band.
 | Deliverable 2: functional POC | ✅ done | `app/` — Streamlit demo, offline-first, 8 one-click cases incl. injection |
 | Deliverable 3: Technical Approach Report | ✅ done | `docs/03_Technical_Approach_Report.md` |
 | Clean git history | ✅ done | 25+ conventional commits, one logical change each |
-| Public GitHub repo + live demo | ⚠️ prepared, not pushed | no credentials in build env — `DEPLOY_STEPS.md` has exact commands; README links are placeholders to fill after push |
+| Public GitHub repo + live demo | ⚠️ prepared, not pushed | no credentials in build env — [`DEPLOY_STEPS.md`](DEPLOY_STEPS.md) has the exact commands (local run, GitHub push, optional Streamlit Community Cloud URL); README links are placeholders to fill after push |
 | GLM free tier verified | ✅ done | both endpoints probed; free models documented with sources (decision.md D-004) |
 | Offline Mode for keyless reviewers | ✅ done | deterministic engine + real cached live outputs; badge enforced |
 | ≥150 labeled synthetic examples | ✅ done | 170 (120/50 split), hard cases, seed-42 reproducible (CI-checked) |

@@ -209,6 +209,14 @@ build-machine time (UTC+5:30 context, dates YYYY-MM-DD).
 - Trade-off accepted: no public URL out of the box (the original challenge text asked for a live demo link); mitigated by the 2-command local run and the documented 5-minute Streamlit Community Cloud path.
 - Revisit if: a submission requirement forces a hosted URL — deploy to Streamlit Community Cloud.
 
+### D-028 : DEPLOY_STEPS.md reinstated as the provider-neutral publish guide   [2026-10-20]
+- Context: D-027 removed `DEPLOY_STEPS.md` together with the HF deploy script, but `report.md`'s requirement table still pointed reviewers to it for the exact publish commands — a dangling reference the user flagged ("there isn't any deploy_steps.md").
+- Options considered: A) patch `report.md` to point at the README/run_local.sh only; B) reinstate `DEPLOY_STEPS.md` covering local run + GitHub push + optional Streamlit Community Cloud; C) fold all publish steps into the README.
+- Decision: B. New `DEPLOY_STEPS.md` at the repo root with three paths: (1) local demo via `scripts/run_local.sh` — unchanged default per D-027; (2) GitHub publish — git identity fix, `git remote add` + `git push -u origin main`, and the two `<your-user>` placeholders to replace after push (README badge, notebook clone cell); (3) optional free public URL via Streamlit Community Cloud — repo/branch, main file `app/streamlit_app.py`, optional `GROQ_API_KEY` secret (app serves Offline Mode without it) — plus a post-publish verification checklist and a troubleshooting table.
+- Reason: keeps D-027's local-first stance while giving the submission-critical publish steps a single, checkable home; the Streamlit Cloud path is exactly D-027 option B, now with exact clicks instead of a one-line mention.
+- Trade-off accepted: one more top-level doc to keep in sync (mitigated: README links to it, and every fact in it is pinned to D-026/D-027).
+- Revisit if: hosting moves back to a managed platform or CI gains a deploy job.
+
 ### D-025 : Open risks (living list)   [updated 2026-10-20]
 1. **Synthetic-data overfit** — all metrics vs generated gold; unvalidated on real inquiries. Mitigation path: roadmap gate 1.
 2. **Provider/model drift** — live numbers are the historical glm-4-plus gateway run (2026-10-19); the live provider is now Groq `openai/gpt-oss-120b` (D-026); direction of drift unknown until rerun with a key (`python evals/run_eval.py --provider groq`).
@@ -216,4 +224,4 @@ build-machine time (UTC+5:30 context, dates YYYY-MM-DD).
 4. **Multi-label over-firing** on associated services (dominant failure family) — per-label gates designed, not built.
 5. **Rate-limit fragility** — Groq free tier is published and verified (30 RPM / 1K RPD / 8K TPM / 200K TPD per model): the 2-call pipeline sustains ~3 inquiries/min free; production needs the queue + fallback design already specified.
 6. **Single-maintainer bus factor** — prompts/catalog/models need owners at Cynbit to survive contact with reality.
-7. **No hosted demo URL by default** (D-027) — local Streamlit run instead; Streamlit Community Cloud path documented in the README if the submission needs a public link.
+7. **No hosted demo URL by default** (D-027) — local Streamlit run instead; the exact GitHub-push and optional Streamlit Community Cloud publish commands live in `DEPLOY_STEPS.md` (D-028) if the submission needs a public link.

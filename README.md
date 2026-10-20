@@ -39,7 +39,8 @@ fall back gracefully to Offline Mode.
 > The demo runs locally as a Streamlit app by design (decision.md D-027) —
 > nothing is hosted, nothing leaves your machine in Offline Mode. If you later
 > want a public URL, the same repo deploys to Streamlit Community Cloud
-> (free, Streamlit's own hosting) with `app/streamlit_app.py` as the main file.
+> (free, Streamlit's own hosting) with `app/streamlit_app.py` as the main file —
+> exact steps for both paths: [`DEPLOY_STEPS.md`](DEPLOY_STEPS.md).
 
 ## Architecture
 
@@ -93,6 +94,7 @@ tests/          52 unit tests (sanitizer, classifier, pipeline, fallback)
 decision.md     every decision with alternatives and reasons
 flow.md         how it all fits together (6 diagrams + requirement map)
 report.md       honest retrospective
+DEPLOY_STEPS.md run locally · push to GitHub · optional streamlit.app URL
 ```
 
 ## The three required deliverables
