@@ -130,7 +130,13 @@ class Advise(BaseModel):
 class Provenance(BaseModel):
     """How this output was produced — always surfaced in the UI."""
 
+    # "glm_live" / "glm_live_fallback_offline" are LEGACY literals kept so the
+    # precomputed cache (data/synthetic/cached_outputs.json, captured with the
+    # previous GLM provider on 2026-10-19) still validates. Live runs since the
+    # Groq migration (decision.md D-026) use the groq_* modes.
     mode: Literal[
+        "groq_live",
+        "groq_live_fallback_offline",
         "glm_live",
         "glm_live_fallback_offline",
         "offline_rules",

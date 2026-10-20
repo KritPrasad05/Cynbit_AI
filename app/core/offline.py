@@ -1,9 +1,10 @@
-"""offline.py — deterministic offline engine + precomputed-GLM cache.
+"""offline.py — deterministic offline engine + precomputed live-LLM cache.
 
 Offline Mode is a first-class provider (challenge requirement 6.4), not a stub:
-  1. Exact-match cache: built-in demo examples replay REAL precomputed GLM
+  1. Exact-match cache: built-in demo examples replay REAL precomputed live-LLM
      outputs (data/synthetic/cached_outputs.json, generated 2026-10-19 via a
-     live GLM endpoint — provenance in the file's meta block).
+     live endpoint with the previous GLM provider — provenance in the file's
+     meta block; regenerate any time with scripts/gen_cache.py + a Groq key).
   2. Deterministic engine for any other input:
      - service multi-label classification: TF-IDF (word 1-2 grams) +
        one-vs-rest logistic regression trained at load time on the TRAIN split

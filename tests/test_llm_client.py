@@ -3,7 +3,9 @@
 import pytest
 
 from app.core.llm_client import (
-    GLMClient,
+    GROQ_DEFAULT_BASE_URL,
+    GROQ_DEFAULT_MODEL,
+    GroqClient,
     ProviderUnavailable,
     _strip_fences,
     resolve_provider,
@@ -11,44 +13,52 @@ from app.core.llm_client import (
 
 
 def test_no_key_raises_provider_unavailable(monkeypatch):
-    monkeypatch.delenv("GLM_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     with pytest.raises(ProviderUnavailable):
-        GLMClient(api_key="")
+        GroqClient(api_key="")
 
 
 def test_resolve_provider_auto_without_key(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "auto")
-    monkeypatch.delenv("GLM_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     assert resolve_provider() == "offline"
 
 
 def test_resolve_provider_auto_with_key(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "auto")
-    monkeypatch.setenv("GLM_API_KEY", "k-test")
-    assert resolve_provider() == "glm"
+    monkeypatch.setenv("GROQ_API_KEY", "k-test")
+    assert resolve_provider() == "groq"
 
 
 def test_resolve_provider_explicit(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "offline")
-    monkeypatch.setenv("GLM_API_KEY", "k-test")
+    monkeypatch.setenv("GROQ_API_KEY", "k-test")
     assert resolve_provider() == "offline"
 
 
+def test_resolve_provider_legacy_glm_alias_maps_to_groq(monkeypatch):
+    """D-026: 'glm' is a deprecated alias — stale .env must not crash the app."""
+    monkeypatch.setenv("LLM_PROVIDER", "glm")
+    monkeypatch.setenv("GROQ_API_KEY", "k-test")
+    assert resolve_provider() == "groq"
+
+
 def test_default_endpoint_config():
-    monkeypatch = None  # noqa: F841 — clarity
     import os
 
-    old = {k: os.environ.get(k) for k in ("GLM_API_KEY", "GLM_BASE_URL", "GLM_MODEL")}
+    old = {k: os.environ.get(k) for k in ("GROQ_API_KEY", "GROQ_BASE_URL", "GROQ_MODEL")}
     try:
-        os.environ.pop("GLM_API_KEY", None)
-        os.environ.pop("GLM_BASE_URL", None)
-        os.environ.pop("GLM_MODEL", None)
+        os.environ.pop("GROQ_API_KEY", None)
+        os.environ.pop("GROQ_BASE_URL", None)
+        os.environ.pop("GROQ_MODEL", None)
         with pytest.raises(ProviderUnavailable):
-            GLMClient()  # no key
+            GroqClient()  # no key
         # construct with key only to inspect defaults
-        c = GLMClient(api_key="k")
-        assert c.base_url == "https://open.bigmodel.cn/api/paas/v4"
-        assert c.model == "glm-4-flash"
+        c = GroqClient(api_key="k")
+        assert c.base_url == GROQ_DEFAULT_BASE_URL == "https://api.groq.com/openai/v1"
+        # deprecated Groq models must never be defaults (verified 2026-10-20)
+        assert c.model == GROQ_DEFAULT_MODEL == "openai/gpt-oss-120b"
+        assert "llama-3" not in c.model
     finally:
         for k, v in old.items():
             if v is not None:
@@ -69,7 +79,7 @@ def test_strip_fences(raw, expected):
 
 
 def test_api_key_never_in_repr():
-    c = GLMClient(api_key="SUPERSECRET")
+    c = GroqClient(api_key="SUPERSECRET")
     r = repr(c)
     assert "SUPERSECRET" not in r
     assert "SUPERSECRET" not in str(c.__dict__.get("api_key", "")[:0])  # noqa: B018

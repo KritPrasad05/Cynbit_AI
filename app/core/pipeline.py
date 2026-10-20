@@ -24,7 +24,7 @@ import re
 import time
 from collections import OrderedDict
 
-from .llm_client import GLMClient, LLMError, ProviderUnavailable
+from .llm_client import GroqClient, LLMError, ProviderUnavailable
 from .offline import get_engine
 from .prompts import (
     PROMPT_VERSION,
@@ -213,8 +213,8 @@ def estimate_complexity(ce: ClassifyExtract, text: str, cx_model=None) -> Estima
 
 
 class DiscoveryPipeline:
-    """Mode-agnostic orchestrator. provider="glm" uses live LLM with automatic
-    offline fallback; provider="offline" never touches the network.
+    """Mode-agnostic orchestrator. provider="groq" uses the live Groq LLM with
+    automatic offline fallback; provider="offline" never touches the network.
 
     Ablation flags (live mode only, used by evals/run_eval.py):
       use_grounding=False — skip catalog-evidence attachment (ablation).
@@ -224,10 +224,12 @@ class DiscoveryPipeline:
     def __init__(
         self,
         provider: str = "offline",
-        llm: GLMClient | None = None,
+        llm: GroqClient | None = None,
         use_grounding: bool = True,
         use_fewshot: bool = True,
     ) -> None:
+        if provider == "glm":  # legacy alias — keep stale callers live (D-026)
+            provider = "groq"
         self.provider = provider
         self.llm = llm
         self.use_grounding = use_grounding
@@ -255,14 +257,14 @@ class DiscoveryPipeline:
         start = time.perf_counter()
         san = sanitize(text)
 
-        if self.provider == "glm" and self.llm is not None:
+        if self.provider == "groq" and self.llm is not None:
             try:
                 return self._run_live(text, san, start)
             except (ProviderUnavailable, LLMError) as exc:
                 brief = self._run_offline(text, san, start)
-                brief.provenance.mode = "glm_live_fallback_offline"  # type: ignore[assignment]
+                brief.provenance.mode = "groq_live_fallback_offline"  # type: ignore[assignment]
                 brief.provenance.notes.append(
-                    f"Live GLM unavailable ({type(exc).__name__}: {str(exc)[:140]}) — fell back to offline engine."
+                    f"Live Groq unavailable ({type(exc).__name__}: {str(exc)[:140]}) — fell back to offline engine."
                 )
                 return brief
         return self._run_offline(text, san, start)
@@ -321,7 +323,7 @@ class DiscoveryPipeline:
         return _assemble(
             text, san, ce, matches, est, adv,
             Provenance(
-                mode="glm_live",
+                mode="groq_live",
                 model=self.llm.model,
                 prompt_version=PROMPT_VERSION,
                 latency_ms=latency,
@@ -346,8 +348,10 @@ class DiscoveryPipeline:
             brief.provenance.cache_hit = True
             brief.provenance.latency_ms = int((time.perf_counter() - start) * 1000)
             brief.provenance.notes = [
-                "Precomputed live-GLM output replayed from data/synthetic/cached_outputs.json "
-                "(exact-match demo input). No network call was made."
+                "Precomputed live-LLM output replayed from data/synthetic/cached_outputs.json "
+                "(exact-match demo input; captured 2026-10-19 with the previous GLM "
+                "provider — regenerate with scripts/gen_cache.py + a Groq key). "
+                "No network call was made."
             ]
             return brief
 

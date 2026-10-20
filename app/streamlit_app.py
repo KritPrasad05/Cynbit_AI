@@ -1,7 +1,7 @@
 """streamlit_app.py — Cynbit Discovery Copilot demo UI.
 
 Runs with NO API key (Offline Mode) out of the box. Optional bring-your-own
-GLM key (held in session state only — never logged, never persisted).
+Groq key (held in session state only — never logged, never persisted).
 
 Pages: Demo | Eval dashboard.
 """
@@ -19,7 +19,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 from app.core.examples import DEMO_EXAMPLES  # noqa: E402
-from app.core.llm_client import GLMClient, ProviderUnavailable  # noqa: E402
+from app.core.llm_client import GroqClient, ProviderUnavailable  # noqa: E402
 from app.core.pipeline import DiscoveryPipeline  # noqa: E402
 from app.core.prompts import PROMPT_VERSION  # noqa: E402
 
@@ -46,8 +46,8 @@ def get_offline_pipeline() -> DiscoveryPipeline:
 
 @st.cache_resource(show_spinner=False)
 def get_live_pipeline(api_key: str, base_url: str, model: str) -> DiscoveryPipeline:
-    llm = GLMClient(api_key=api_key, base_url=base_url or None, model=model or None)
-    return DiscoveryPipeline(provider="glm", llm=llm)
+    llm = GroqClient(api_key=api_key, base_url=base_url or None, model=model or None)
+    return DiscoveryPipeline(provider="groq", llm=llm)
 
 
 # ---------------------------------------------------------------------------
@@ -57,9 +57,11 @@ def get_live_pipeline(api_key: str, base_url: str, model: str) -> DiscoveryPipel
 
 def mode_badge(mode: str) -> None:
     labels = {
-        "glm_live": ("🟢 LIVE GLM", "green"),
-        "glm_live_fallback_offline": ("🟠 LIVE→OFFLINE FALLBACK", "orange"),
-        "offline_cached": ("🔵 OFFLINE MODE: precomputed GLM output", "blue"),
+        "groq_live": ("🟢 LIVE GROQ", "green"),
+        "groq_live_fallback_offline": ("🟠 LIVE→OFFLINE FALLBACK", "orange"),
+        "glm_live": ("🟢 LIVE (legacy GLM run)", "green"),
+        "glm_live_fallback_offline": ("🟠 LIVE→OFFLINE FALLBACK (legacy)", "orange"),
+        "offline_cached": ("🔵 OFFLINE MODE: precomputed live-LLM output", "blue"),
         "offline_rules": ("⚪ OFFLINE MODE: rule-based output", "gray"),
         "baseline_rules": ("🟫 RULES BASELINE (eval only)", "gray"),
     }
@@ -86,7 +88,7 @@ def render_brief(brief) -> None:  # brief: LeadBrief
     if prov.mode in ("offline_cached", "offline_rules"):
         st.info(
             "OFFLINE MODE: precomputed or rule-based output — this is NOT live "
-            "inference. Add a GLM key in the sidebar for live results.",
+            "inference. Add a Groq key in the sidebar for live results.",
             icon="🔵",
         )
 
@@ -205,29 +207,38 @@ with st.sidebar:
     st.markdown("**Mode**")
     mode = st.radio(
         "Mode",
-        ["Offline (no key)", "Live GLM"],
+        ["Offline (no key)", "Live Groq"],
         label_visibility="collapsed",
     )
 
     api_key = ""
     base_url, model = "", ""
-    if mode == "Live GLM":
+    if mode == "Live Groq":
         api_key = st.text_input(
-            "GLM API key (bring your own)",
+            "Groq API key (bring your own)",
             type="password",
             help="Held in browser session only. Never logged, never written to disk. "
-            "Free key: open.bigmodel.cn (CN) or z.ai (international).",
+            "Free key: https://console.groq.com/keys",
         )
+        model = st.selectbox(
+            "Model",
+            [
+                "openai/gpt-oss-120b",
+                "openai/gpt-oss-20b (faster)",
+            ],
+            help="Groq production models, verified 2026-10-20 (console.groq.com/docs/models). "
+            "Free tier: 30 requests/min, 1K/day per model.",
+        )
+        model = model.split(" ")[0]
         with st.expander("Advanced"):
             base_url = st.text_input(
-                "Base URL", value="https://open.bigmodel.cn/api/paas/v4"
+                "Base URL", value="https://api.groq.com/openai/v1"
             )
-            model = st.text_input("Model", value="glm-4-flash")
         if not api_key:
             st.info("No key yet? The app runs fully in Offline Mode.")
     else:
         st.success("Offline Mode active — zero keys, zero network. One-click demo "
-                   "examples replay real precomputed GLM outputs; other inputs use "
+                   "examples replay real precomputed live-LLM outputs; other inputs use "
                    "the deterministic engine.")
 
     st.divider()
@@ -276,15 +287,15 @@ if page == "Demo":
 
     if run and text.strip():
         try:
-            if mode == "Live GLM" and api_key:
+            if mode == "Live Groq" and api_key:
                 try:
                     pipe = get_live_pipeline(api_key.strip(), base_url, model)
                 except ProviderUnavailable as exc:
-                    st.error(f"Could not initialize live GLM: {exc}")
+                    st.error(f"Could not initialize live Groq: {exc}")
                     st.stop()
             else:
                 pipe = get_offline_pipeline()
-            with st.spinner("Running pipeline…" if mode == "Live GLM" else "Running offline pipeline…"):
+            with st.spinner("Running pipeline…" if mode == "Live Groq" else "Running offline pipeline…"):
                 brief = pipe.run(text)
             render_brief(brief)
 
@@ -315,7 +326,7 @@ if page == "Demo":
    language & length checks. Input is wrapped in untrusted-data delimiters.
 2. **Classify + extract** — service multi-label classification and structured
    field extraction (goal, deliverables, budget/timeline signals). Live mode:
-   one schema-validated GLM call (max 2 validation retries). Offline mode:
+   one schema-validated Groq call (max 2 validation retries). Offline mode:
    TF-IDF/LogReg classifier + regex extraction.
 3. **Ground** — every service match is evidenced against the curated public
    catalog (`app/assets/services_catalog.json`, source cynbit.in/services).
@@ -323,14 +334,15 @@ if page == "Demo":
 4. **Estimate** — deterministic complexity banding (S/M/L + effort range).
    Identical rules in live and offline modes; estimates are never LLM-invented.
 5. **Advise** — risks, prioritized clarifying questions, next steps mapped to
-   Cynbit's 6-step lifecycle. Live: second schema-validated GLM call. Offline:
+   Cynbit's 6-step lifecycle. Live: second schema-validated Groq call. Offline:
    feature-keyed templates.
 6. **Validate & assemble** — LeadBrief (Pydantic). Confidence and
    needs-human-review flags are explicit.
 
-**Offline Mode is real**: one-click examples replay precomputed live-GLM
-outputs (`data/synthetic/cached_outputs.json`); any other input uses the
-deterministic engine. The badge always tells you which path produced the result.
+**Offline Mode is real**: one-click examples replay precomputed live-LLM
+outputs (`data/synthetic/cached_outputs.json`, captured with the previous
+GLM provider); any other input uses the deterministic engine. The badge
+always tells you which path produced the result.
 
 **Grounding policy**: the system only states facts about Cynbit that exist in
 the retrieved catalog; anything missing becomes a clarifying question.
@@ -355,13 +367,15 @@ else:
         s = json.loads(summary_path.read_text(encoding="utf-8"))
 
         def pick(key: str) -> float:
-            """summary.json stores per-run dicts; headline = the live run."""
+            """summary.json stores per-run dicts; headline = the live run.
+            Prefers a Groq rerun if present; falls back to the historical
+            GLM run (2026-10-19) otherwise."""
             v = s.get(key, 0)
             if isinstance(v, dict):
-                return v.get("glm", 0.0)
+                return v.get("groq", v.get("glm", 0.0))
             return v
 
-        st.markdown("### Headline numbers — FINAL run (live GLM pipeline)")
+        st.markdown("### Headline numbers — FINAL live-LLM run")
         cards = st.columns(4)
         cards[0].metric("Service routing (macro-F1)", f"{pick('service_macro_f1'):.2f}")
         cards[1].metric("Exact-set accuracy", f"{pick('service_exact_set_acc'):.2f}")

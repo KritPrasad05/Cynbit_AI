@@ -112,15 +112,32 @@ def test_request_cache_same_input_same_object():
 
 def test_live_fallback_to_offline():
     class BrokenLLM:
-        model = "glm-4-flash"
+        model = "openai/gpt-oss-120b"
+
+        def generate(self, *a, **k):
+            raise ProviderUnavailable("simulated auth failure")
+
+    pipe = DiscoveryPipeline(provider="groq", llm=BrokenLLM())
+    brief = pipe.run("We need a website for our store.")
+    assert brief.provenance.mode == "groq_live_fallback_offline"
+    assert any("fell back" in n.lower() for n in brief.provenance.notes)
+
+
+def test_live_fallback_accepts_legacy_glm_pipeline_provider():
+    """D-026 migration guard: a stale provider=\"glm\" caller is normalized to
+    the live Groq path instead of silently degrading to offline."""
+
+    class BrokenLLM:
+        model = "openai/gpt-oss-120b"
 
         def generate(self, *a, **k):
             raise ProviderUnavailable("simulated auth failure")
 
     pipe = DiscoveryPipeline(provider="glm", llm=BrokenLLM())
+    assert pipe.provider == "groq"
     brief = pipe.run("We need a website for our store.")
-    assert brief.provenance.mode == "glm_live_fallback_offline"
-    assert any("fell back" in n.lower() for n in brief.provenance.notes)
+    # live path was taken, failed, and fell back — not silently offline
+    assert "fallback_offline" in brief.provenance.mode
 
 
 def test_hinglish_handled():
