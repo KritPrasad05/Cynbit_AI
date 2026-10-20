@@ -30,7 +30,7 @@ If missed → tune on real data, extend 2 weeks, re-gate once.
 | Brief-first workflow: BD opens the brief before reading raw email | BD + Engineer | Adoption ≥ 80% of inbound |
 | Feedback loop (thumbs + corrections) wired to a server-side store | Engineer | Weekly label stream |
 | Retrain offline classifier on real labels; refresh few-shot set | Engineer | Offline engine v2 |
-| Live GLM key as platform secret + monitoring (fallback rate, latency, injection rate) | Engineer | Dashboard + alerts |
+| Live Groq key (GROQ_API_KEY) as platform secret + monitoring (fallback rate, latency, injection rate) | Engineer | Dashboard + alerts |
 | Polish suggested_response templates for out-of-scope (careers, partnerships) | BD | Standard redirects |
 
 **Gate 2:** first-response time < 5 minutes for auto-acknowledgment path;

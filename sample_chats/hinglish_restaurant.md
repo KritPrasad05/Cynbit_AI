@@ -1,6 +1,6 @@
 # Sample chat — Hinglish restaurant inquiry
 
-Source: precomputed **live GLM** run (see data/synthetic/cached_outputs.json meta: glm-4-flash via http://127.0.0.1:8787/v1, 2026-10-19).
+Source: precomputed **live LLM** run — HISTORICAL GLM provider, captured 2026-10-19 (see data/synthetic/cached_outputs.json meta: glm-4-plus via the build-gateway bridge; the live provider is now Groq, decision.md D-026).
 
 ## Input
 
@@ -10,7 +10,7 @@ Namaste, humein apne restaurant ke liye online ordering system chahiye. Budget t
 
 ## Output (LeadBrief, abridged)
 
-- **Mode:** `glm_live` · model: glm-4-flash · latency: 8243 ms · tokens in/out: 2204/686 · prompt vv3
+- **Mode:** `glm_live` (historical GLM run) · model: glm-4-plus (gateway-served) · latency: 8243 ms · tokens in/out: 2204/686 · prompt vv3
 - **Intent:** new_project
 - **Goal:** Online ordering system for a restaurant
 - **Industry:** food · **budget:** budget thoda tight hai (tight budget, no figure) · **timeline:** —

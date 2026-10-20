@@ -12,12 +12,13 @@ I analyzed Cynbit Technologies from its public site and market data, scored
 **Discovery Copilot**, a pipeline that turns a free-text inbound inquiry into
 a grounded, schema-validated discovery brief (service fit with evidence,
 scope extraction, complexity band, risks, clarifying questions, next steps
-mapped to Cynbit's real 6-step lifecycle). It runs live on free-tier GLM and
-keyless in a real Offline Mode; it was evaluated against two baselines and an
-ablation on a held-out synthetic split; it is packaged for Hugging Face
-Spaces with CI. The submission is honest about its weakest points: synthetic
-validation data, gateway-dependent live numbers, and a coarse complexity
-band.
+mapped to Cynbit's real 6-step lifecycle). It runs live on Groq's free tier
+(`openai/gpt-oss-120b`, switched from GLM on user instruction after the
+original build — decision.md D-026) and keyless in a real Offline Mode; it
+was evaluated against two baselines and an ablation on a held-out synthetic
+split; it runs as a local Streamlit app with CI. The submission is honest
+about its weakest points: synthetic validation data, gateway-dependent
+historical live numbers, and a coarse complexity band.
 
 ## 2. What was asked vs. what was delivered
 
@@ -81,13 +82,26 @@ Headline (all from `evals/results/metrics_table.json`, held-out 50):
 
 ## 5. Live demo notes and how to run
 
-- Local: `pip install -r requirements.txt && streamlit run app/streamlit_app.py`
-  — boots in Offline Mode, no `.env`, no key (verified in Phase 10 QA).
-- Tests: `pytest tests/` (49 tests, no network).
-- Eval: `python evals/run_eval.py` (offline) / `--provider glm` (with key).
-- Deploy: `bash scripts/deploy_hf.sh <user> <space>` after `huggingface-cli
-  login` — full steps in `DEPLOY_STEPS.md`.
-- The Space is prepared to boot keyless; a GLM key is only a Space secret.
+- Local: `bash scripts/run_local.sh` (or `pip install -r requirements.txt
+  && streamlit run app/streamlit_app.py`) — boots in Offline Mode, no `.env`,
+  no key (re-verified after the Groq migration with a headless Streamlit
+  AppTest: keyless boot, example replay, eval dashboard render).
+- Tests: `pytest tests/` (52 tests, no network).
+- Eval: `python evals/run_eval.py` (offline) / `--provider groq` (with a
+  GROQ_API_KEY; the historical GLM artifacts stay in evals/results/ under
+  their own tags).
+- No cloud hosting by design (D-027): the demo is the local Streamlit app.
+  If a public URL is needed, the same repo deploys to Streamlit Community
+  Cloud (free) with `app/streamlit_app.py` as the main file and
+  `GROQ_API_KEY` as a secret.
+
+> **Post-completion changes (2026-10-20, user instruction):** the live LLM
+> provider was switched from GLM to **Groq** (`openai/gpt-oss-120b`, verified
+> current production model — the llama-3.x models are deprecated on Groq;
+> see decision.md D-026), and the demo was switched from a Hugging Face
+> Space to a **local Streamlit run** (decision.md D-027). Historical GLM
+> eval numbers and cached demo outputs are kept with their provenance and
+> marked HISTORICAL; both refresh with one command each using a Groq key.
 
 ## 6. What worked
 
@@ -183,4 +197,5 @@ Headline (all from `evals/results/metrics_table.json`, held-out 50):
   `docs: opportunity scoring and selection`, `feat(core): …`, `feat(app): …`,
   `test: …`, `eval: …`, `docs: …` — no fix-fix-fix chains, no giant initial
   commit.
-- **Decision log:** `decision.md` (D-001…D-025 + open risks).
+- **Decision log:** `decision.md` (D-001…D-027 + open risks; D-026/D-027
+  record the post-completion Groq + local-run switch).

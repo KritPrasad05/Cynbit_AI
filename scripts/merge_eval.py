@@ -148,6 +148,26 @@ def main() -> int:
             "(decision.md D-026). Rerun live with: python evals/run_eval.py --provider groq",
             "Complexity metrics exclude out-of-scope rows (no engagement -> no estimate).",
         ],
+        # Documented analysis of the ablation runs (provenance: the 2026-10-19
+        # historical GLM session; underlying per_example files remain in results/).
+        "ablation_notes": {
+            "no_grounding": {
+                "n": 10,
+                "matched_live_only_exact_set": {"main": 0.62, "ablation": 0.62},
+                "run_to_run_service_agreement": 1.0,
+                "interpretation": (
+                    "Classification deltas on n=10 are within run-to-run variance (agreement 100%) — "
+                    "grounding is not an accuracy feature by design. What grounding adds: 100% of "
+                    "service matches carry catalog evidence + source URL (0% in the ablation), and "
+                    "confidence is calibrated against lexical support (low-support picks flagged)."
+                ),
+            },
+            "no_fewshot": {
+                "status": "blocked",
+                "reason": "build-gateway rate limits exhausted retries during the 2026-10-19 session",
+                "rerun": "python evals/run_eval.py --provider groq --ablation no_fewshot",
+            },
+        },
     }
     (RESULTS / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
 

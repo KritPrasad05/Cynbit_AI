@@ -1,5 +1,5 @@
 {
- "measured_on": "live GLM runs (build gateway, served glm-4-plus; n live examples)",
+ "measured_on": "live GLM runs (build gateway, served glm-4-plus; n live examples) — HISTORICAL, pre-migration (D-026); refresh with --provider groq",
  "tokens_per_example_mean": 2684.1,
  "latency_p50_ms": 8711,
  "latency_p95_ms": 13470,
@@ -8,19 +8,19 @@
    "requests_per_month": 100,
    "tokens_per_month": 268410,
    "cost_usd_per_month_free_tier": 0.0,
-   "note": "glm-4-flash / GLM-4.5-Flash free tier: $0 per token within rate limits (published); rate caps unpublished on api.z.ai (third-party estimate ~1 rps / ~1000 per day). A paid fallback (e.g. GLM flash tiers at ~$0.06/M input) would cost well under $1/month at these volumes."
+   "note": "Groq free tier (verified 2026-10-20): $0 within rate limits — 30 requests/min, 1K requests/day, 8K tokens/min, 200K tokens/day per model (console.groq.com/docs/rate-limits). At ~2.7k tokens per inquiry the 8K TPM cap allows ~3 inquiries/min sustained. On the Developer tier, openai/gpt-oss-20b costs $0.075/M input + $0.30/M output -> ~$0.29/month at 1k inquiries; gpt-oss-120b ~$0.57/month (console.groq.com/docs/models)."
   },
   "1000": {
    "requests_per_month": 1000,
    "tokens_per_month": 2684100,
    "cost_usd_per_month_free_tier": 0.0,
-   "note": "glm-4-flash / GLM-4.5-Flash free tier: $0 per token within rate limits (published); rate caps unpublished on api.z.ai (third-party estimate ~1 rps / ~1000 per day). A paid fallback (e.g. GLM flash tiers at ~$0.06/M input) would cost well under $1/month at these volumes."
+   "note": "Groq free tier (verified 2026-10-20): $0 within rate limits — 30 requests/min, 1K requests/day, 8K tokens/min, 200K tokens/day per model (console.groq.com/docs/rate-limits). At ~2.7k tokens per inquiry the 8K TPM cap allows ~3 inquiries/min sustained. On the Developer tier, openai/gpt-oss-20b costs $0.075/M input + $0.30/M output -> ~$0.29/month at 1k inquiries; gpt-oss-120b ~$0.57/month (console.groq.com/docs/models)."
   },
   "10000": {
    "requests_per_month": 10000,
    "tokens_per_month": 26841000,
    "cost_usd_per_month_free_tier": 0.0,
-   "note": "glm-4-flash / GLM-4.5-Flash free tier: $0 per token within rate limits (published); rate caps unpublished on api.z.ai (third-party estimate ~1 rps / ~1000 per day). A paid fallback (e.g. GLM flash tiers at ~$0.06/M input) would cost well under $1/month at these volumes."
+   "note": "Groq free tier (verified 2026-10-20): $0 within rate limits — 30 requests/min, 1K requests/day, 8K tokens/min, 200K tokens/day per model (console.groq.com/docs/rate-limits). At ~2.7k tokens per inquiry the 8K TPM cap allows ~3 inquiries/min sustained. On the Developer tier, openai/gpt-oss-20b costs $0.075/M input + $0.30/M output -> ~$0.29/month at 1k inquiries; gpt-oss-120b ~$0.57/month (console.groq.com/docs/models)."
   }
  },
  "offline_mode": {

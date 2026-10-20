@@ -15,7 +15,7 @@ Companion runnable artifact: `app/` (Streamlit demo), `evals/` (all numbers).
 
 | Criterion | Target | Result |
 |---|---|---|
-| Service routing exact-set accuracy (held-out synthetic) | ≥ 0.60 | 0.66 live (CI95 0.51–0.78) — `evals/results/metrics_glm.json` |
+| Service routing exact-set accuracy (held-out synthetic) | ≥ 0.60 | 0.66 live (CI95 0.51–0.78) — `evals/results/metrics_glm.json` (historical GLM run; refresh via `--provider groq`) |
 | Service routing macro-F1 | ≥ 0.80 | 0.87 live |
 | Out-of-scope recall | ≥ 0.95 | 1.00 |
 | Complexity exact / adjacent | ≥ 0.55 / ≥ 0.90 | 0.36 / 0.93 live |
@@ -48,8 +48,8 @@ flowchart LR
 | Estimator | `pipeline.estimate_complexity` + `offline.ComplexityModel` | deterministic S/M/L + effort range; classical model trained on TRAIN split; keyword rules produce the user-facing rationale | no |
 | Advisor | `prompts.SYSTEM_ADVISE` | risks, prioritized clarifying questions, next steps mapped to the real 6-step lifecycle | call 2 |
 | Validator | `app/core/schemas.py` | Pydantic schemas; bounded retry (≤2) with validation error fed back | — |
-| Provider | `app/core/llm_client.py` | OpenAI-compatible GLM client; 401/429/timeout → `ProviderUnavailable` → automatic offline fallback | — |
-| Offline engine | `app/core/offline.py` | TF-IDF/LogReg multi-label classifier, OOS keyword rules, regex extraction, template advice, precomputed-GLM cache | no |
+| Provider | `app/core/llm_client.py` | OpenAI-compatible Groq client (JSON mode, gpt-oss reasoning_effort=low, optional-param 400 fallback); 401/429/timeout → `ProviderUnavailable` → automatic offline fallback | — |
+| Offline engine | `app/core/offline.py` | TF-IDF/LogReg multi-label classifier, OOS keyword rules, regex extraction, template advice, precomputed live-LLM cache | no |
 | UI | `app/streamlit_app.py` | cards (never raw JSON), mode badge, latency/tokens, feedback JSONL, eval dashboard | — |
 
 Two LLM calls per request (not a mega-prompt): classify+extract, then advise.
@@ -61,8 +61,8 @@ model compliance.
 
 | Decision | Choice | Alternatives considered | Why |
 |---|---|---|---|
-| Live LLM | **GLM free tier**: default `glm-4-flash` @ `https://open.bigmodel.cn/api/paas/v4`; one env-var switch to `glm-4.5-flash` @ `https://api.z.ai/api/paas/v4` | Gemini Flash (free tier exists, but challenge mandates GLM); local Ollama qwen2.5 (no GPU in target deploy); paid GPT-4o-mini (violates $0 budget) | Challenge constraint + both endpoints verified OpenAI-compatible (decision.md D-004). JSON-mode-capable, function-call support, 26 languages incl. code-mixed input handling |
-| Build-time live access | Sandbox GLM gateway via local OpenAI-compatible bridge (`glm-4-plus` served) | Leaving live path untested; Node reimplementation | Exercised the exact production code path; caveat: served model ≠ free tier, all results labeled (decision.md D-016) |
+| Live LLM | **Groq**: `openai/gpt-oss-120b` @ `https://api.groq.com/openai/v1` (default; `openai/gpt-oss-20b` selectable as the fast path) | Gemini Flash (free tier, but the original brief mandated GLM; superseded by the user's Groq instruction); llama-3.1-8b-instant / llama-3.3-70b-versatile (**deprecated on Groq since 2026-08-16** — rejected); local Ollama qwen2.5 (no GPU in target deploy); paid GPT-4o-mini (violates $0 budget) | OpenAI-compatible endpoint; production models verified 2026-10-20 against console.groq.com/docs/models + /docs/deprecations (decision.md D-026); JSON mode (`response_format: json_object`) on every schema call; 131k context; free tier 30 RPM / 1K RPD / 8K TPM / 200K TPD per model |
+| Build-time live access (historical) | Sandbox GLM gateway via local OpenAI-compatible bridge (`glm-4-plus` served) — used for the original live eval + demo cache before the Groq switch | Leaving live path untested; Node reimplementation | Exercised the exact production code path; caveat: served model ≠ repo default, all results labeled HISTORICAL (decision.md D-016, D-026) |
 | Classification (offline engine) | TF-IDF (word 1–2 grams, sublinear) + one-vs-rest LogReg | Keyword rules only (= baseline B0: exact-set 0.36 vs 0.56); transformer fine-tune (overkill at N=170; no GPU) | Classical baseline doubles as the offline engine — one component, two jobs |
 | Complexity banding | char 3–5-gram TF-IDF + LogReg (balanced classes) + transparent keyword rationale | Pure keyword rules (63% train); LLM estimate (rejected: estimates must never be hallucinated) | Deterministic, auditable, no pricing risk from model drift |
 | Grounding | Hand-curated catalog (public site facts) + TF-IDF cosine | Vector embeddings + vector DB (Pinecone — on Cynbit's stack page, but adds infra for 4 documents); BM25 (equivalent at this scale) | 4 service entries don't need a vector DB; evidence strings stay human-readable with source URLs |
@@ -80,7 +80,7 @@ flowchart LR
     F -->|TF-IDF+LogReg fit| H[offline engine]
     F -->|4 verbatim examples| I[few-shot prompts]
     G -->|run_eval.py| J[evals/results/]
-    K[live GLM via<br/>gen_cache.py] --> L[cached_outputs.json<br/>8 demo replays]
+    K[live LLM via<br/>gen_cache.py] --> L[cached_outputs.json<br/>8 demo replays]
 ```
 
 - **Sources.** Cynbit public pages (text-only snapshots with URL + date + HTTP status in every file; manifest at `data/raw/_manifest.json`). No internal data existed in scope — every limitation that follows from that is stated where relevant.
@@ -115,13 +115,13 @@ Method, metrics, and caveats are fully specified in `evals/README.md`; every num
 |---|---|---|---|---|---|---|---|---|
 | B0 rules | 0.36 | 0.75 | 1.00 | 0.40 / 0.96 | 0.83 | 0.64 | 1.00 | 2 |
 | B1 offline engine | 0.56 | 0.74 | 1.00 | 0.67 / 0.96 | 0.89 | 0.67 | 1.00 | 2 |
-| **Final live GLM** | **0.66** | **0.87** | 1.00 | 0.36 / 0.93 | 0.93 | 0.76 | 1.00 | ~10k |
+| **Final live LLM\* (historical GLM run)** | **0.66** | **0.87** | 1.00 | 0.36 / 0.93 | 0.93 | 0.76 | 1.00 | ~10k |
 | Ablation no-grounding (n=20) | see file | see file | — | — | — | — | — | — |
 | Ablation no-fewshot (n=20) | see file | see file | — | — | — | — | — | — |
 
 (Ablation cells are filled from their metrics files at report time — `metrics_glm_no_grounding.json`, `metrics_glm_no_fewshot.json`; merge via `scripts/merge_eval.py`.)
 
-**Reading the table honestly:** rules get surprisingly close on per-class F1 but collapse on exact-set (over-predicting multiple labels); the trained offline engine doubles exact-set at zero cost; live GLM adds +0.10 exact-set, +0.13 macro-F1, and materially better extraction (budget 0.89→0.93, timeline 0.67→0.76) plus advice quality the table can't show. The architecture earns its complexity at the *extraction and grounding* layers more than at routing — that is the honest headline, and it matches how the ablations land (§6.2).
+**Reading the table honestly:** rules get surprisingly close on per-class F1 but collapse on exact-set (over-predicting multiple labels); the trained offline engine doubles exact-set at zero cost; the live LLM adds +0.10 exact-set, +0.13 macro-F1, and materially better extraction (budget 0.89→0.93, timeline 0.67→0.76) plus advice quality the table can't show. The architecture earns its complexity at the *extraction and grounding* layers more than at routing — that is the honest headline, and it matches how the ablations land (§6.2). \*Live numbers are the historical GLM run (2026-10-19); the live provider is now Groq — refresh with `evals/run_eval.py --provider groq`.
 
 ### 6.2 Baselines and ablations
 
@@ -146,7 +146,7 @@ Full per-example predictions: `evals/results/per_example_glm*.jsonl`; curated an
 
 **Integration with Cynbit's real stack** (their public tech stack: Next.js, NestJS, FastAPI, PostgreSQL, Redis, AWS/Azure — Fact: `data/raw/services.md`):
 
-1. **Ingestion.** Form webhook + email poller (opportunities@cynbit.in) + optional WhatsApp Business API → one queue (Redis, already on their stack). Rate-shape GLM calls through a worker with the existing httpx/openai client.
+1. **Ingestion.** Form webhook + email poller (opportunities@cynbit.in) + optional WhatsApp Business API → one queue (Redis, already on their stack). Rate-shape Groq calls through a worker with the existing httpx/openai client (free tier allows ~3 inquiries/min sustained; developer tier removes the cap for ~$0.29–0.57/month at 1k inquiries).
 2. **Storage.** LeadBrief JSON → PostgreSQL table (Pydantic ↔ schema migration); sanitizer's masked text is the only raw-text column.
 3. **Human loop.** Brief lands in a lightweight review UI (or their CRM if adopted) with thumbs feedback → the same `data/feedback.jsonl` schema, now server-side.
 4. **Monitoring.** Per-mode success rates, fallback rate (live coverage), latency p50/p95, schema-retry counts, injection-flag rate, feedback upvote ratio; alert on fallback-rate > 20% (key/quota problems) and injection-rate spikes.
@@ -170,7 +170,7 @@ Detailed 30/60/90 with success gates: `docs/bonus/08_Rollout_Roadmap_30_60_90.md
 
 1. **Synthetic-only validation.** Every metric is against generated gold; the 90-day plan's first gate is re-validation on real labeled inquiries.
 2. **Complexity banding is coarse.** Exact-band 0.36 (adjacent 0.93) reflects both model limits and genuinely ambiguous gold; the fix is real historical effort data, not more prompt tuning.
-3. **Live numbers via build gateway (glm-4-plus), not free-tier glm-4-flash.** Re-running `evals/run_eval.py --provider glm` with a real key is a 10-minute task and is the first thing to do post-submission.
+3. **Live numbers are the historical GLM gateway run (glm-4-plus), pre-migration.** The live provider is now Groq (`openai/gpt-oss-120b`); re-running `evals/run_eval.py --provider groq` with a free key is a 10-minute task and is the first thing to do post-submission.
 4. **Single-turn.** The copilot drafts questions but doesn't yet consume answers; a follow-up turn (answers → refined estimate) is the highest-value next feature.
 5. **Language coverage.** Hinglish handled (detection + bilingual advice); other Indian languages untested.
 6. **No embeddings/vector store.** Right-sized for a 4-entry catalog; revisit if grounding extends to case studies and blog (then: pgvector on their PostgreSQL stack, not a new vendor).

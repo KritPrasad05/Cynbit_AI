@@ -1,7 +1,7 @@
 # evals/ — Evaluation harness and results
 
 Everything here runs offline with zero keys: `python evals/run_eval.py`.
-Live variants need `GLM_API_KEY` (see `.env.example`).
+Live variants need `GROQ_API_KEY` (see `.env.example`).
 
 ## Layout
 
@@ -19,9 +19,10 @@ Live variants need `GLM_API_KEY` (see `.env.example`).
 |-----|------------|---------|
 | `rules` | Baseline B0: keyword/TF-IDF-similarity rules, no trained components | `python evals/run_eval.py --baseline rules` |
 | `offline` | Baseline B1 / Offline-Mode engine: TF-IDF+LogReg multi-label classifier + trained complexity model + regex extraction | `python evals/run_eval.py` |
-| `glm` | Final system: live GLM pipeline (sanitize → LLM classify/extract → ground → deterministic estimate → LLM advise) | `python evals/run_eval.py --provider glm` |
-| `glm_no_grounding` | Ablation: no catalog-evidence attachment | `... --provider glm --ablation no_grounding` |
-| `glm_no_fewshot` | Ablation: call 1 without few-shot examples | `... --provider glm --ablation no_fewshot` |
+| `glm` | HISTORICAL final-system run (2026-10-19, previous GLM provider — kept with provenance; see D-026) | artifacts in `results/`; merge via `scripts/merge_eval.py` |
+| `groq` | Final system: live Groq pipeline (sanitize → LLM classify/extract → ground → deterministic estimate → LLM advise) | `python evals/run_eval.py --provider groq` |
+| `groq_no_grounding` | Ablation: no catalog-evidence attachment | `... --provider groq --ablation no_grounding` |
+| `groq_no_fewshot` | Ablation: call 1 without few-shot examples | `... --provider groq --ablation no_fewshot` |
 
 ## Metric definitions
 
@@ -51,8 +52,10 @@ Live variants need `GLM_API_KEY` (see `.env.example`).
    Cynbit inquiries.
 2. Live runs executed through a local OpenAI-compatible bridge over the build
    environment's GLM gateway, which served **glm-4-plus** (it ignores the
-   model parameter). The repo's default live model is free-tier
-   **glm-4-flash**; numbers may differ against it. Re-run with a real key.
+   model parameter) — that is the **historical** `glm` run, kept with its
+   provenance. The repo's live provider is now **Groq** (`openai/gpt-oss-120b`,
+   decision.md D-026); numbers may differ — re-run with a free Groq key
+   (`--provider groq`) to refresh the live rows.
 3. Latency in live runs includes gateway queuing during rate-limit windows
    (bursts of ~25–35 calls trigger cooldowns) — treat p50 as representative,
    and see `results/cost_latency.json` for projections.

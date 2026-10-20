@@ -9,7 +9,7 @@ build-machine time (UTC+5:30 context, dates YYYY-MM-DD).
 ### D-001 : Repository location and git identity   [Phase 0]  [2026-10-19]
 - Context: The build sandbox only guarantees write access under its project root; the deliverable is a git repo with clean history.
 - Options considered: A) repo inside the sandbox project root (pros: writable, versionable; cons: none material), B) repo in `/tmp` (pros: none; cons: wiped on restart, violates sandbox conventions).
-- Decision: A — repo lives at the sandbox project root; pushed to GitHub as `cynbit-ai-opportunity` by the candidate (see DEPLOY_STEPS.md).
+- Decision: A — repo lives at the sandbox project root; pushed to GitHub as `cynbit-ai-opportunity` by the candidate (push commands: README + `git remote add origin …`).
 - Reason: Durability and the sandbox file-path convention; git identity set to a neutral `AI/ML Intern Candidate <candidate@cynbit-challenge.local>` so no personal data is embedded without consent.
 - Trade-off accepted: Git author email is a placeholder, not the candidate's real address.
 - Revisit if: The candidate pushes to GitHub and wants their own identity — run `git config user.email` + `git commit --amend` is NOT recommended after push; instead set identity before pushing.
@@ -165,7 +165,7 @@ build-machine time (UTC+5:30 context, dates YYYY-MM-DD).
 - Trade-off accepted: Slightly heavier UI file (~430 lines) — logic stays in core/ with zero Streamlit imports.
 - Revisit if: multi-turn follow-ups arrive — needs a session model.
 
-### D-021 : Hosting — Hugging Face Spaces (Streamlit SDK, CPU basic, offline-first)   [Phase 9]  [2026-10-19]
+### D-021 : Hosting — Hugging Face Spaces (Streamlit SDK, CPU basic, offline-first)   [Phase 9]  [2026-10-19]  [SUPERSEDED by D-027, 2026-10-20]
 - Options considered: A) HF Spaces, B) Render free tier (cold starts, sleeps), C) Streamlit Community Cloud (auth coupling), D) localhost-only.
 - Decision: A per the challenge's fixed constraint; deploy packaged by scripts/deploy_hf.sh (Space README frontmatter with app_file: app/streamlit_app.py, pinned sdk_version 1.66.0); GLM key only as a Space secret; boots keyless.
 - Reason: Fixed by the brief; also the best free fit (no cold-start sleep, public URL, secret management).
@@ -191,12 +191,29 @@ build-machine time (UTC+5:30 context, dates YYYY-MM-DD).
 2. The no-fewshot ablation and LLM-judge sample could not complete due to gateway rate limits — marked blocked with re-run commands (D-019); the required minimum (baseline + ablation) is satisfied.
 3. eval_set.jsonl is a labeled pointer-copy of the frozen data/synthetic/leads_eval.jsonl (the spec named the file; the data lives under data/ with the rest of the dataset and its provenance).
 4. Live eval ran in resumable chunks due to sandbox process reaping + rate limits; scripts/merge_eval.py recomputes all metrics under one consistent semantics.
-5. Git identity is a placeholder (candidate@cynbit-challenge.local) — set your own before pushing (DEPLOY_STEPS.md step 1).
+5. Git identity is a placeholder (candidate@cynbit-challenge.local) — set your own (`git config user.name/user.email`) before pushing to GitHub.
 
-### D-025 : Open risks (living list)
+### D-026 : Live LLM provider switched from GLM to Groq (user instruction)   [2026-10-20]
+- Context: After the original build completed on GLM (Zhipu/Z.ai), the user asked to switch the code to the Groq API key. Both providers expose OpenAI-compatible chat/completions, so this was a configuration + verification change, not an architecture change — the provider abstraction (D-004) paid off exactly as designed.
+- Options considered (verified against console.groq.com/docs/models, /docs/deprecations, /docs/rate-limits on 2026-10-20): A) `openai/gpt-oss-120b`; B) `openai/gpt-oss-20b`; C) `qwen/qwen3.8-27b` (rejected: preview tier, not production); D) `llama-3.1-8b-instant` / `llama-3.3-70b-versatile` (REJECTED: deprecated on Groq since 2026-08-16).
+- Decision: `GroqClient` → `https://api.groq.com/openai/v1`, default model `openai/gpt-oss-120b` with `openai/gpt-oss-20b` selectable in the UI (fast path, 1000 t/s); env vars `GROQ_API_KEY` / `GROQ_BASE_URL` / `GROQ_MODEL`; JSON mode (`response_format: json_object`) requested whenever a schema is passed; `reasoning_effort=low` for gpt-oss models to keep the 2-call pipeline snappy; if the endpoint rejects an optional param (400), one plain retry without optional params; `LLM_PROVIDER=glm` accepted as a deprecated alias for `groq` (env + pipeline), so stale configs keep live behavior instead of silently degrading; legacy `glm_*` provenance literals retained in the schema so the precomputed cache (2026-10-19) still validates.
+- Reason: gpt-oss-120b/20b are Groq's current production text models (131k context); free tier is 30 RPM / 1K RPD / 8K TPM / 200K TPD per model — enough for a demo, and the eval harness's new default `--sleep 20` respects the 8K TPM cap. Historical GLM eval artifacts are kept under their own tags with provenance intact rather than relabeled — every number continues to trace to its file.
+- Trade-off accepted: live metrics in evals/results/ and the cached demo outputs remain the genuine 2026-10-19 GLM capture (marked HISTORICAL) until someone reruns `evals/run_eval.py --provider groq` or `scripts/gen_cache.py` with a key. Docs mark this everywhere numbers are quoted.
+- Revisit if: Groq deprecates the gpt-oss models; free-tier limits change; or a Groq rerun shows metric drift beyond run-to-run noise.
+
+### D-027 : Demo delivery — local Streamlit app instead of Hugging Face Spaces (user instruction)   [2026-10-20]
+- Context: D-021 chose HF Spaces hosting per the original challenge constraint. The user then asked to "use streamlit instead of hugging face": the Streamlit app itself, run locally, is the demo; no third-party hosting.
+- Options considered: A) local run only (`scripts/run_local.sh`); B) Streamlit Community Cloud (free, Streamlit-native public URL); C) keep the HF Space (rejected — user instruction).
+- Decision: A as the default. `scripts/deploy_hf.sh` and `DEPLOY_STEPS.md` removed; `scripts/run_local.sh` added (venv, pinned requirements, optional `.env` load, keyless Offline-Mode boot); README quickstart leads with `bash scripts/run_local.sh`. B documented in the README as the natural upgrade if a public URL is ever needed (same repo, main file `app/streamlit_app.py`, `GROQ_API_KEY` as a secret).
+- Reason: user instruction; also maximizes reviewer trust — no external account needed to see the demo, and the zero-key Offline Mode story stays intact (nothing leaves the reviewer's machine).
+- Trade-off accepted: no public URL out of the box (the original challenge text asked for a live demo link); mitigated by the 2-command local run and the documented 5-minute Streamlit Community Cloud path.
+- Revisit if: a submission requirement forces a hosted URL — deploy to Streamlit Community Cloud.
+
+### D-025 : Open risks (living list)   [updated 2026-10-20]
 1. **Synthetic-data overfit** — all metrics vs generated gold; unvalidated on real inquiries. Mitigation path: roadmap gate 1.
-2. **Free-tier model drift** — live numbers measured on glm-4-plus via gateway, not glm-4-flash; direction of drift unknown until re-run with a key.
+2. **Provider/model drift** — live numbers are the historical glm-4-plus gateway run (2026-10-19); the live provider is now Groq `openai/gpt-oss-120b` (D-026); direction of drift unknown until rerun with a key (`python evals/run_eval.py --provider groq`).
 3. **Budget extraction regression in live mode** (0.75 vs 0.89 offline) — hybrid merge designed, not built.
 4. **Multi-label over-firing** on associated services (dominant failure family) — per-label gates designed, not built.
-5. **Rate-limit fragility** — free-tier caps are unpublished on api.z.ai; production needs the queue + fallback design already specified.
+5. **Rate-limit fragility** — Groq free tier is published and verified (30 RPM / 1K RPD / 8K TPM / 200K TPD per model): the 2-call pipeline sustains ~3 inquiries/min free; production needs the queue + fallback design already specified.
 6. **Single-maintainer bus factor** — prompts/catalog/models need owners at Cynbit to survive contact with reality.
+7. **No hosted demo URL by default** (D-027) — local Streamlit run instead; Streamlit Community Cloud path documented in the README if the submission needs a public link.

@@ -6,7 +6,7 @@ judgment (labeled **Inference** throughout), grounded in the scraped site corpus
 (`data/raw/`) and the market sources in `data/raw/_research_notes.md`.
 
 **Weights** (fixed by the challenge brief):
-Business impact 30% · Feasibility on free-tier GLM with no private data 25% ·
+Business impact 30% · Feasibility on a free-tier LLM (GLM at scoring time; Groq since D-026) with no private data 25% ·
 Data availability (public or synthesizable) 20% · Demo-ability under 2 minutes
 15% · Strategic fit with Cynbit's stated positioning 10%.
 
@@ -59,7 +59,7 @@ labeled):
    generation #5, AI-readiness audit #7, even Revio/TenantEase demo prep),
    making it the highest-leverage single build.
 5. Feasibility is a perfect 5 for this challenge: text-in → structured-JSON-out
-   is exactly what free-tier GLM + Pydantic does well, with zero private data
+   is exactly what a free-tier LLM (Groq gpt-oss) + Pydantic does well, with zero private data
    required and a crisp 2-minute demo.
 
 **Why the runner-ups lost:**

@@ -10,8 +10,8 @@ Currency: INR. Built 2026-10-19.
 
 | Item | Choice | Cost |
 |---|---|---|
-| LLM inference | GLM free tier (glm-4-flash / GLM-4.5-Flash) | ₹0 within rate limits |
-| Hosting | Hugging Face Spaces (CPU basic) | ₹0 |
+| LLM inference | Groq free tier (openai/gpt-oss-120b default; gpt-oss-20b fast path) | ₹0 within rate limits (30 RPM, 1K req/day, 8K tokens/min per model) |
+| Hosting | local run (default) or Streamlit Community Cloud free tier | ₹0 |
 | Repo/CI | GitHub + Actions free tier | ₹0 |
 | Measured usage | ~2.8k tokens per inquiry, p50 ~9 s (build gateway; `evals/results/cost_latency.json`) | — |
 
@@ -63,4 +63,4 @@ guaranteed-ish, not the revenue lift, which is not.
 
 - Inbound volume < 20/month → time-saved term collapses; the tool becomes a proposal-writing aid instead.
 - Cynbit's deals close through referrals with weeks-long cycles (speed-to-lead irrelevant) → the 5-minute lever is moot.
-- GLM free tier caps bind hard at >1k inquiries/day → add paid-tier budget line (~₹200–300/mo at 10k — still marginal).
+- Groq free tier caps bind at 1K requests/day per model (8K tokens/min) → developer-tier line at 10k inquiries is ~$0.57/mo on gpt-oss-120b (~₹50/mo — still marginal; gpt-oss-20b halves it).

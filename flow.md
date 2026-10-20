@@ -30,13 +30,13 @@ after the fact, and QA closes the loop.
 flowchart LR
     U[user inquiry] --> S[Sanitizer<br/>PII mask · injection screen]
     S --> C{mode?}
-    C -- glm live --> L1[LLM call 1<br/>classify+extract JSON]
+    C -- groq live --> L1[LLM call 1<br/>classify+extract JSON]
     C -- offline --> O1[TF-IDF+LogReg<br/>+ regex + OOS rules]
     L1 --> G[Grounder<br/>catalog evidence + source URL]
     O1 --> G
     G --> E[Estimator<br/>deterministic S/M/L]
     E --> A{mode?}
-    A -- glm live --> L2[LLM call 2<br/>risks·questions·steps JSON]
+    A -- groq live --> L2[LLM call 2<br/>risks·questions·steps JSON]
     A -- offline --> O2[template advisor]
     L2 --> V[Pydantic validator<br/>retry ≤ 2 with error feedback]
     O2 --> V
@@ -61,7 +61,7 @@ flowchart LR
     S -->|50 frozen| EV[eval split<br/>never used for prompts]
     TR -->|fit| CL[offline classifier + complexity model]
     TR -->|4 verbatim rows| FS[few-shot in prompts.py]
-    DEMO[8 demo examples] -->|scripts/gen_cache.py<br/>live GLM| CACHE[cached_outputs.json]
+    DEMO[8 demo examples] -->|scripts/gen_cache.py<br/>live LLM| CACHE[cached_outputs.json]
     CACHE --> OFF[Offline Mode replay]
 ```
 
@@ -77,7 +77,7 @@ sequenceDiagram
     participant ST as Streamlit UI
     participant P as Pipeline
     participant R as Grounder (catalog)
-    participant L as GLM (live) / Offline engine
+    participant L as Groq (live) / Offline engine
     participant V as Validator (Pydantic)
 
     U->>ST: paste inquiry / click example
@@ -106,19 +106,20 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[README.md<br/>60-second orientation] --> B{click live demo link}
-    B --> C[Hugging Face Space<br/>loads in Offline Mode, no key]
+    A[README.md<br/>60-second orientation] --> B{run the demo}
+    B --> C[bash scripts/run_local.sh<br/>boots in Offline Mode, no key]
     C --> D[click one-click example<br/>e.g. Prompt-injection attempt]
     D --> E[structured brief renders<br/>badge + latency + evidence]
     E --> F{impressed?}
     F -- yes --> G[open evals/results/<br/>metrics_table.json + failures.md]
     F -- yes --> H[skim docs/01 report<br/>→ decision.md for judgment calls]
-    G --> I[run locally:<br/>3 commands, no key]
+    G --> I[add own Groq key in sidebar<br/>→ live inference]
     H --> I
 ```
 
-Everything a reviewer needs in 5 minutes is one README away: demo link,
-results table, the three required deliverables, and the honest limitations.
+Everything a reviewer needs in 5 minutes is one README away: a 2-command
+local demo, results table, the three required deliverables, and the honest
+limitations. (Optional public URL: Streamlit Community Cloud — D-027.)
 
 ## 6. Git and deployment flow
 
@@ -126,10 +127,14 @@ results table, the three required deliverables, and the honest limitations.
 flowchart LR
     D[dev: conventional commits<br/>one logical change each] --> GH[GitHub repo<br/>main branch]
     GH --> CI[GitHub Actions<br/>ruff + pytest + offline eval smoke<br/>+ determinism + secret scan]
-    CI -->|green| HF[Hugging Face Space<br/>Streamlit SDK, CPU basic]
-    HF -->|no secrets by default| APP[app boots in Offline Mode]
-    HF -->|optional GLM_API_KEY secret| LIVE[Live GLM enabled]
+    CI -->|green| LOC[reviewer clones & runs<br/>bash scripts/run_local.sh]
+    LOC -->|no secrets by default| APP[app boots in Offline Mode]
+    LOC -->|BYOK GROQ_API_KEY<br/>sidebar or .env| LIVE[Live Groq enabled]
+    GH -. optional . SCC[Streamlit Community Cloud<br/>free public URL]
 ```
+
+Since 2026-10-20 the demo ships as a local Streamlit app (D-027); a public
+URL, if ever needed, comes from Streamlit Community Cloud with the same repo.
 
 ## Requirement → file mapping
 
@@ -139,10 +144,10 @@ flowchart LR
 | AI/ML Proof of Concept (functional demo) | `app/` (Streamlit) + `data/` + `scripts/`; runs keyless via Offline Mode |
 | Technical Approach Report (models, pipeline, prompts, plan) | `docs/03_Technical_Approach_Report.md` |
 | Clean code + git history | 25+ conventional commits on `main`; CI: `.github/workflows/ci.yml` |
-| Public GitHub repo / live demo | `DEPLOY_STEPS.md` + `scripts/deploy_hf.sh` (exact commands; URLs land in `README.md` after push) |
-| GLM free tier verification | `decision.md` D-004 (both endpoints probed, free-tier models documented with sources) |
+| Public GitHub repo / live demo | `README.md` quickstart (`bash scripts/run_local.sh`); optional public URL via Streamlit Community Cloud — D-027 |
+| LLM provider verification (Groq) | `decision.md` D-026 (models, deprecations, rate limits verified 2026-10-20 with sources; GLM-era record in D-004) |
 | Zero-key demo (Offline Mode) | `app/core/offline.py` + `data/synthetic/cached_outputs.json` + UI badge |
-| $0 budget | free-tier LLM, HF free hosting, no paid APIs (cost model: `docs/bonus/04_ROI_and_Cost_Model.md`) |
+| $0 budget | free-tier LLM (Groq), local run / free Streamlit Community Cloud if hosted, no paid APIs (cost model: `docs/bonus/04_ROI_and_Cost_Model.md`) |
 | ≥10 scored opportunities, weights, matrix | `docs/bonus/07_Opportunity_Scoring_Matrix.md` (13 opportunities) |
 | Red-team pass on the pick | `docs/bonus/07_Opportunity_Scoring_Matrix.md` §C; summarized in report §7 |
 | ≥150 labeled synthetic examples + hard cases | `data/synthetic/leads_{train,eval}.jsonl` (170; vague/Hinglish/OOS/injection/very-short/mixed) |
@@ -155,7 +160,7 @@ flowchart LR
 | PII masking in logs | `sanitize()` runs before any model call/write; feedback stores masked data |
 | Robustness (empty/long/non-English/off-topic) | sanitizer warnings + OOS rules; tests in `tests/` |
 | Rate-limit/timeout + friendly errors | `app/core/llm_client.py` (ProviderUnavailable → fallback); UI never crashes |
-| Provider abstraction `generate(messages, schema=...)` | `app/core/llm_client.py::GLMClient.generate` |
+| Provider abstraction `generate(messages, schema=...)` | `app/core/llm_client.py::GroqClient.generate` |
 | Eval: metrics, baseline, ablation, failure cases, cost | `evals/run_eval.py`, `evals/results/` (metrics, confusion matrices, `failures.md`, `cost_latency.json`) |
 | 30/60/90 roadmap | `docs/bonus/08_Rollout_Roadmap_30_60_90.md` |
 | Sample transcripts (8+, incl. failures + injection) | `sample_chats/` (4 live + 4 offline, annotated) |

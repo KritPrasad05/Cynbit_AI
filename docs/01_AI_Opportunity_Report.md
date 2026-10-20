@@ -7,7 +7,7 @@ Evidence labels: **[Fact]** = verified on Cynbit's public site (snapshot in `dat
 
 ## 1. Executive summary
 
-Cynbit Technologies is an AI-automation-first services firm in Jaipur whose entire delivery motion begins with an unstructured, human-heavy "Discovery & audit" step **[Fact]**. The single highest-value AI opportunity identified across 13 scored candidates is the **Discovery Copilot: an inbound lead qualification and scoping assistant** that turns free-text inquiries (form, email, WhatsApp, LinkedIn) into a structured brief — service fit, complexity band, effort range, risk flags, and clarifying questions — grounded strictly in Cynbit's published service catalog. It scored **4.80/5.00** on the weighted matrix (business impact 5/5), ahead of Revio review intelligence (4.65) and the SEO content engine (4.25). It attacks documented speed-to-lead economics, automates the one process step every engagement passes through, and is demonstrable end-to-end on free-tier GLM with zero private data — the accompanying Streamlit POC runs keyless in Offline Mode.
+Cynbit Technologies is an AI-automation-first services firm in Jaipur whose entire delivery motion begins with an unstructured, human-heavy "Discovery & audit" step **[Fact]**. The single highest-value AI opportunity identified across 13 scored candidates is the **Discovery Copilot: an inbound lead qualification and scoping assistant** that turns free-text inquiries (form, email, WhatsApp, LinkedIn) into a structured brief — service fit, complexity band, effort range, risk flags, and clarifying questions — grounded strictly in Cynbit's published service catalog. It scored **4.80/5.00** on the weighted matrix (business impact 5/5), ahead of Revio review intelligence (4.65) and the SEO content engine (4.25). It attacks documented speed-to-lead economics, automates the one process step every engagement passes through, and is demonstrable end-to-end on a free-tier LLM (Groq since the provider switch, decision.md D-026) with zero private data — the accompanying Streamlit POC runs keyless in Offline Mode.
 
 ## 2. Cynbit snapshot
 
@@ -119,7 +119,7 @@ The 2×2 shows the Discovery Copilot alone in the "do first" quadrant at impact 
 4. **Prompt injection.** Lead text is untrusted input; the eval set includes injection attempts and the sanitizer quarantines instructions embedded in inquiries (pass rate reported in `evals/results/`).
 5. **Hallucination risk to prospects.** Mitigated architecturally: any factual statement about Cynbit's services must trace to the retrieved catalog; missing information becomes a clarifying question instead of an invented answer.
 6. **Red-team summary** (full pass in the scoring-matrix doc): weakest assumption = inbound volume; skeptical-CTO objections = mispricing trust and "a structured form would suffice" — both answered by range-plus-flag output design and the rules-vs-pipeline ablation; production killers = injection, PII logs, auto-send overreach — all addressed or disclosed.
-7. **Model/platform dependency.** Free-tier GLM rate limits could throttle peak intake; Offline Mode degrades gracefully but produces rule-based output, and the mode badge makes that impossible to miss.
+7. **Model/platform dependency.** Free-tier rate limits could throttle peak intake (Groq free tier: 30 RPM / 1K requests/day / 8K tokens-min per model, verified 2026-10-20); Offline Mode degrades gracefully but produces rule-based output, and the mode badge makes that impossible to miss.
 
 ## 8. Recommended roadmap
 
@@ -147,6 +147,7 @@ S10. thebusinessresearchcompany.com, Feedback and Reviews Management Software Gl
 S11. mordorintelligence.com, Online Reputation Management Market (Jan 2026) — $6.88B → $7.75B.
 S12. imarcgroup.com/india-proptech-market (Sep 2026) — India proptech $1.31B → $1.47B, 12.26% CAGR; grandviewresearch.com India proptech outlook — $1.56B (2025).
 S13. marketresearchfuture.com, India Edtech Market (Sep 2026) — $12.1B (2025) → $50B (2035); imarcgroup.com/edtech-market (Oct 2026) — global $279.8B → $320.7B; D&B "Business Enterprises of Tomorrow" MSME report — ~15% manufacturing MSME AI adoption.
-S14. GLM free tier: aibase.com/news/11323 (Aug 2024, glm-4-flash free); z.ai model-API pricing; docs.litellm.ai/docs/providers/zai (glm-4.5-flash FREE).
+S14. GLM free tier (historical, provider at build time): aibase.com/news/11323 (Aug 2024, glm-4-flash free); z.ai model-API pricing; docs.litellm.ai/docs/providers/zai (glm-4.5-flash FREE).
+S15. Groq API (live provider since 2026-10-20, user-instructed switch — decision.md D-026): console.groq.com/docs/models (production models + pricing, accessed 2026-10-20); console.groq.com/docs/deprecations (llama-3.1-8b-instant and llama-3.3-70b-versatile deprecated 2026-08-16); console.groq.com/docs/rate-limits (free tier: 30 RPM / 1K RPD / 8K TPM / 200K TPD per model).
 
 Vendor-reported benchmarks (S5–S7) are directionally useful but methodologically opaque; they inform prioritization, not promises.

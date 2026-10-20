@@ -39,15 +39,16 @@ present. Any resemblance to real inquiries is coincidental and unintentional.
   service descriptions (grounded in data/raw/, rewritten), used for retrieval
   grounding. Not synthetic in origin, but contains only public marketing facts.
 - `cached_outputs.json` — precomputed outputs for the built-in demo examples.
-  Generated 2026-10-19 via live GLM calls through the build environment's GLM
-  gateway (served model: glm-4-plus; the repo's live mode defaults to free-tier
-  glm-4-flash — see decision.md D-003/D-014). Used by Offline Mode for the
-  one-click examples; all other offline inputs use the deterministic engine.
+  Generated 2026-10-19 via live LLM calls through the build environment's GLM
+  gateway (served model: glm-4-plus) — kept verbatim with that provenance. The
+  repo's live provider is now **Groq** (`openai/gpt-oss-120b`, decision.md
+  D-026). Used by Offline Mode for the one-click examples; all other offline
+  inputs use the deterministic engine.
 
 ## Regeneration
 
 ```
 python scripts/scrape.py                  # re-collect raw pages
 python scripts/build_data.py              # regenerate synthetic leads (seed 42)
-python scripts/gen_cache.py               # regenerate cached_outputs (needs GLM key env, else offline fallback)
+python scripts/gen_cache.py               # regenerate cached_outputs (needs GROQ_API_KEY env; refuses to fabricate without a key)
 ```

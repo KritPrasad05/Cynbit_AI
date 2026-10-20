@@ -56,7 +56,7 @@
  },
  "notes": [
   "Gold labels are synthetic; metrics measure against that distribution.",
-  "Live runs used the build environment's GLM gateway (served glm-4-plus), not free-tier glm-4-flash.",
+  "The 'glm' run is HISTORICAL: captured 2026-10-19 via the build environment's GLM gateway (served glm-4-plus), before the live provider migrated to Groq (decision.md D-026). Rerun live with: python evals/run_eval.py --provider groq",
   "Complexity metrics exclude out-of-scope rows (no engagement -> no estimate)."
  ],
  "ablation_notes": {
@@ -71,8 +71,8 @@
   },
   "no_fewshot": {
    "status": "blocked",
-   "reason": "build-gateway rate limits exhausted retries during the session",
-   "rerun": "python evals/run_eval.py --provider glm --ablation no_fewshot"
+   "reason": "build-gateway rate limits exhausted retries during the 2026-10-19 session",
+   "rerun": "python evals/run_eval.py --provider groq --ablation no_fewshot"
   }
  }
 }
