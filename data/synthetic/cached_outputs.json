@@ -5,7 +5,7 @@
   "model": "glm-4-plus (served by build-environment GLM gateway; client requested glm-4-flash — gateway ignores the model param)",
   "base_url": "http://127.0.0.1:8787/v1 (local OpenAI-compatible bridge over the build gateway — see decision.md D-016)",
   "prompt_version": "v3",
-  "note": "SYNTHETIC demo inputs; REAL live-model outputs captured once for Offline Mode replay. Regenerate with scripts/gen_cache.py (any GLM key)."
+  "note": "SYNTHETIC demo inputs; REAL live-model outputs captured once (2026-10-19, previous GLM provider) for Offline Mode replay. The live provider is now Groq (decision.md D-026) — regenerate with scripts/gen_cache.py + GROQ_API_KEY to refresh with Groq outputs."
  },
  "examples": [
   {
